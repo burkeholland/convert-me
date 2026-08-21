@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ConvertMe Features and FAQ</title>
+<meta name="description" content="ConvertMe features and FAQ for Windows 11. Explorer conversion, supported formats, HEIC codec, and install details."/>
+<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1"/>
+<link rel="canonical" href="https://burkeholland.github.io/convert-me/faq.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://burkeholland.github.io/convert-me/faq.html"/>
+<meta property="og:site_name" content="ConvertMe"/>
+<meta property="og:title" content="ConvertMe Features and FAQ"/>
+<meta property="og:description" content="Formats, Explorer menu, HEIC codec, and how ConvertMe writes files."/>
+<meta property="og:image" content="https://burkeholland.github.io/convert-me/og-image.svg"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="ConvertMe Features and FAQ"/>
+<meta name="twitter:description" content="Formats, Explorer menu, HEIC codec, and how ConvertMe writes files."/>
+<meta name="twitter:image" content="https://burkeholland.github.io/convert-me/og-image.svg"/>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is ConvertMe free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Download it from GitHub Releases."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which platforms does ConvertMe support?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Windows 11 x64. There is no macOS build."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which image formats are supported?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PNG, JPG/JPEG, BMP, TIFF, WebP, and HEIC/HEIF. GIF is not included."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does ConvertMe overwrite existing files?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Converted files are written next to the originals. If the name already exists, ConvertMe adds a numbered suffix such as photo (1).jpg."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does HEIC conversion fail?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "HEIC uses the Windows HEIF Image Extensions codec. If it is missing, ConvertMe shows an install action that opens the Microsoft Store page for the codec."
+      }
+    }
+  ]
+}
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+  background: #0b0f14;
+  color: #e2e8f0;
+  line-height: 1.65;
+}
+
+main {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 48px 24px 72px;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  margin-bottom: 10px;
+}
+
+h2 {
+  margin-top: 30px;
+  margin-bottom: 10px;
+  font-size: 1.35rem;
+}
+
+p.lead {
+  color: #94a3b8;
+  margin-bottom: 24px;
+}
+
+ul { margin-left: 20px; }
+li { margin-bottom: 8px; }
+
+details {
+  margin-bottom: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(17,24,32,0.7);
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+details p { margin-top: 8px; color: #cbd5e1; }
+
+a { color: #7dd3fc; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.92em;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+</style>
+</head>
+<body>
+  <main>
+    <a class="back-link" href="./">← Back to homepage</a>
+    <h1>ConvertMe Features and FAQ</h1>
+    <p class="lead">Everything you need to know about ConvertMe for Windows 11.</p>
+
+    <h2>Features</h2>
+    <ul>
+      <li>Right-click images in File Explorer and convert from <strong>Show more options → Convert image</strong>.</li>
+      <li>Direct format choices convert immediately in a small progress window that closes when it succeeds.</li>
+      <li><strong>Custom…</strong> opens the full window so you can pick format and quality for the whole batch.</li>
+      <li>PNG, JPG/JPEG, BMP, TIFF, WebP, and HEIC/HEIF. GIF is not included.</li>
+      <li>Writes new files next to the originals and never overwrites an existing name.</li>
+      <li>Optional Explorer menu. Turn it off in Settings. The app lives in the tray.</li>
+    </ul>
+
+    <h2>Frequently asked questions</h2>
+    <details>
+      <summary>Is ConvertMe free?</summary>
+      <p>Yes. Download it from <a href="https://github.com/burkeholland/convert-me/releases/latest">GitHub Releases</a>.</p>
+    </details>
+    <details>
+      <summary>Does it work on macOS?</summary>
+      <p>No. ConvertMe is Windows 11 x64 only.</p>
+    </details>
+    <details>
+      <summary>Which formats are supported?</summary>
+      <p>PNG, JPG/JPEG, BMP, TIFF, WebP, and HEIC/HEIF. Animated WebP files use the first frame. GIF is intentionally left out of the first release.</p>
+    </details>
+    <details>
+      <summary>Where do converted files go?</summary>
+      <p>Next to the originals, using the same base name and the new extension. If <code>photo.jpg</code> already exists, you get <code>photo (1).jpg</code>.</p>
+    </details>
+    <details>
+      <summary>Why does HEIC fail?</summary>
+      <p>HEIC conversion needs the Windows HEIF Image Extensions codec. If it is missing, ConvertMe shows an install action that opens the Microsoft Store page for the codec.</p>
+    </details>
+    <details>
+      <summary>Can I turn off the Explorer menu?</summary>
+      <p>Yes. Settings → App → Explorer context menu. That choice is saved, so the menu is not re-added on the next launch.</p>
+    </details>
+    <details>
+      <summary>Does it ask for administrator permission?</summary>
+      <p>No. Registration is per-user.</p>
+    </details>
+    <details>
+      <summary>What happens to transparency and metadata?</summary>
+      <p>Transparent pixels flatten to white when the output format cannot store alpha. Compatible metadata is preserved when the target format allows it. Original file timestamps are kept.</p>
+    </details>
+  </main>
+</body>
+</html>
