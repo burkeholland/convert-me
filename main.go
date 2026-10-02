@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"fmt"
 	"os"
 
 	"github.com/wailsapp/wails/v2"
@@ -15,106 +14,32 @@ import (
 var assets embed.FS
 
 func main() {
-	launch := ParseLaunchRequest(osArgs())
-	if launch.Mode == "convert" || launch.Mode == "custom" {
-		aggregated, coordinator, err := coalesceExplorerLaunch(launch)
-		if err != nil {
-			fmt.Println("ConvertMe Explorer launch error:", err)
-			os.Exit(1)
-		}
-		if !coordinator {
-			return
-		}
-		launch = aggregated
-	}
-	if launch.Mode == "register" || launch.Mode == "unregister" {
-		executable, err := os.Executable()
-		if err == nil {
-			settings, loadErr := loadSettings()
-			if loadErr != nil {
-				settings = defaultSettings()
-			}
-			if launch.Mode == "register" {
-				err = RegisterContextMenu(executable)
-				settings.ExplorerIntegration = true
-				settings.LaunchAtLogin = true
-				if err == nil {
-					err = setLaunchAtLogin(true, executable)
-				}
-			} else {
-				err = UnregisterContextMenu()
-				settings.ExplorerIntegration = false
-				settings.LaunchAtLogin = false
-				if err == nil {
-					err = setLaunchAtLogin(false, executable)
-				}
-			}
-			if err == nil {
-				err = saveSettings(settings)
-			}
-		}
-		if err != nil {
-			fmt.Println("ConvertMe integration error:", err)
-			os.Exit(1)
-		}
-		return
-	}
-
-	quick := launch.Mode == "convert"
-	app := NewApp(launch)
-	if !quick {
-		startTray(app)
-	}
-
-	// Quick conversions get a small transient progress window that closes
-	// itself when done; the full app gets the regular window.
-	windowOptions := &options.App{
-		Title:             "ConvertMe",
-		Width:             960,
-		Height:            680,
-		MinWidth:          720,
-		MinHeight:         560,
-		Frameless:         true,
-		StartHidden:       launch.Mode == "tray",
-		HideWindowOnClose: true,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		BackgroundColour: options.NewRGBA(0, 0, 0, 0),
-		DragAndDrop: &options.DragAndDrop{
-			EnableFileDrop:     true,
-			DisableWebViewDrop: true,
-		},
+	root, data, pathErr := appPaths()
+	workingDirectory, _ := os.Getwd()
+	app := NewApp(root, data, absolutePaths(os.Args[1:], workingDirectory))
+	app.initErr = pathErr
+	if err := wails.Run(&options.App{
+		Title: "Convert Me", Width: 960, Height: 680, MinWidth: 480, MinHeight: 520,
+		Frameless:        true,
+		BackgroundColour: &options.RGBA{R: 251, G: 251, B: 253, A: 255},
+		AssetServer:      &assetserver.Options{Assets: assets, Handler: app.thumbnailHandler()},
+		OnStartup:        app.startup, OnShutdown: app.shutdown, OnBeforeClose: app.beforeClose,
+		Bind: []interface{}{app},
+		// On Windows a dropped file reaches the app through the page itself, so the page
+		// must be allowed to receive drops. The Wails drop script stops the default
+		// behaviour of opening the dropped file in the window.
+		DragAndDrop: &options.DragAndDrop{EnableFileDrop: true},
 		Windows: &windows.Options{
+			WebviewIsTransparent: false,
+			DisableWindowIcon:    false,
 			Theme:                windows.SystemDefault,
-			BackdropType:         windows.Mica,
-			WebviewIsTransparent: true,
-			WindowIsTranslucent:  true,
 		},
-		OnStartup:  app.startup,
-		OnDomReady: app.domReady,
-		OnShutdown: app.shutdown,
-		Bind: []interface{}{
-			app,
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId:               "7a1f4c0e-5d3b-4f86-9c2a-6e41b8d0a7f3",
+			OnSecondInstanceLaunch: app.secondInstance,
 		},
+	}); err != nil {
+		println("Convert Me could not start:", err.Error())
+		os.Exit(1)
 	}
-	if quick {
-		windowOptions.Title = "ConvertMe — converting images"
-		windowOptions.Width = 440
-		windowOptions.Height = 220
-		windowOptions.MinWidth = 440
-		windowOptions.MinHeight = 220
-		windowOptions.DisableResize = true
-		windowOptions.HideWindowOnClose = false
-	}
-
-	err := wails.Run(windowOptions)
-
-	if err != nil {
-		fmt.Println("ConvertMe error:", err)
-	}
-}
-
-func osArgs() []string {
-	return os.Args[1:]
 }

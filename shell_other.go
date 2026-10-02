@@ -2,26 +2,10 @@
 
 package main
 
-func RegisterContextMenu(string) error {
-	return nil
-}
+import "errors"
 
-func UnregisterContextMenu() error {
-	return nil
-}
+func openFolder(string) error { return errors.New("opening folders is only supported on Windows") }
 
-func contextMenuRegistered() bool {
-	return false
-}
-
-func setLaunchAtLogin(bool, string) error {
-	return nil
-}
-
-func shellExecutable() (string, error) {
-	return "", nil
-}
-
-func codecStoreURL() string {
-	return "https://apps.microsoft.com/detail/9pmmsr1cgpwg"
+func revealFiles(string, []string) error {
+	return errors.New("showing files is only supported on Windows")
 }

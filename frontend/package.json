@@ -1,14 +1,21 @@
 {
-  "name": "frontend",
+  "name": "convert-me",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "dev": "vite --host 127.0.0.1 --port 5183 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/logic.test.ts",
+    "test:e2e": "playwright test"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "vite": "^7.0.0"
+    "@playwright/test": "1.58.2",
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
   }
 }

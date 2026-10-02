@@ -1,12 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8"/>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>ConvertMe - Image converter</title>
-</head>
-<body>
-<div id="app"></div>
-<script src="./src/main.ts" type="module"></script>
-</body>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ws://127.0.0.1:5183; object-src 'none'; base-uri 'self'">
+    <title>Convert Me</title>
+    <script>
+      (() => {
+        const param = new URLSearchParams(window.location.search).get("scoutTheme");
+        let stored = "";
+        try { stored = localStorage.getItem("convert-me-theme") || ""; } catch { /* Preferences are optional. */ }
+        const system = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        const theme = param === "dark" || param === "light" ? param : stored === "dark" || stored === "light" ? stored : system;
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>
