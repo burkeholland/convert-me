@@ -1,0 +1,38 @@
+{
+  "ffmpeg": {
+    "version": "8.1.3",
+    "url": "https://ffmpeg.org/releases/ffmpeg-8.1.3.tar.xz",
+    "sha256": "7138d28c96d9d3e3af4ee3d8cad72741f8ffb40da90c1112235dea3ecd3178a3",
+    "archive": "ffmpeg-8.1.3.tar.xz",
+    "directory": "ffmpeg-8.1.3",
+    "license": "LGPL-2.1-or-later",
+    "verified": "PGP signature by the FFmpeg release key FCF986EA15E6E293A5644F10B4322F04D67658D8, checked 2026-10-02"
+  },
+  "zlib": {
+    "version": "1.3.2",
+    "url": "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz",
+    "sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
+    "archive": "zlib-1.3.2.tar.gz",
+    "directory": "zlib-1.3.2",
+    "license": "Zlib",
+    "verified": "matches the digest published on the GitHub release, checked 2026-10-02"
+  },
+  "libwebp": {
+    "version": "1.6.0",
+    "url": "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz",
+    "sha256": "e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564",
+    "archive": "libwebp-1.6.0.tar.gz",
+    "directory": "libwebp-1.6.0",
+    "license": "BSD-3-Clause",
+    "verified": "official WebM project download, checked 2026-10-02"
+  },
+  "lame": {
+    "version": "3.100",
+    "url": "https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz",
+    "sha256": "ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e",
+    "archive": "lame-3.100.tar.gz",
+    "directory": "lame-3.100",
+    "license": "LGPL-2.0-or-later",
+    "verified": "matches the widely published digest for the 3.100 release, checked 2026-10-02"
+  }
+}
