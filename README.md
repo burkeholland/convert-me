@@ -63,6 +63,9 @@ See [PRIVACY.md](PRIVACY.md) for exactly what the app stores, and what it does n
 
 ## Install and run
 
+The zip comes from the build described under [Build from source](#build-from-source).
+This repository does not offer it as a download yet.
+
 1. Unzip `ConvertMe-0.1.0-windows-x64.zip` anywhere you like.
 2. Open `ConvertMe.exe`.
 
