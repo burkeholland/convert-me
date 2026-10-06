@@ -7,7 +7,9 @@
 #   - The Start menu lists "Convert Me Development".
 # It needs no administrator rights, no certificate and no Store. It does need Developer
 # Mode, and it does not turn that on. Nothing is copied: Windows uses the folder
-# build\test-package\layout in place, so that folder has to stay where it is.
+# build\msix\development\layout in place, so that folder has to stay where it is.
+# The Store package is never registered by this script. It has its own identity, and
+# Windows installs it from the Store.
 #
 #   scripts\register-test-package.ps1            register (again)
 #   scripts\register-test-package.ps1 -Remove    remove
@@ -15,8 +17,8 @@
 param([switch]$Remove)
 . (Join-Path $PSScriptRoot 'common.ps1')
 $root = Split-Path $PSScriptRoot -Parent
-$layout = Join-Path $root 'build\test-package\layout'
-$name = ([xml](Get-Content -LiteralPath (Join-Path $root 'packaging\msix\AppxManifest.xml') -Raw)).Package.Identity.Name
+$layout = Join-Path $root 'build\msix\development\layout'
+$name = (Get-MsixIdentity).IdentityName
 
 function Remove-TestPackage {
     foreach ($package in @(Get-AppxPackage -Name $name)) {
@@ -40,7 +42,7 @@ if ($developerMode -ne 1) {
     throw 'Developer Mode is off. Windows only registers a package from a folder when it is on (Settings > System > For developers). This script does not change that setting.'
 }
 $manifest = Join-Path $layout 'AppxManifest.xml'
-if (-not (Test-Path -LiteralPath $manifest)) { throw 'The test package has not been built. Run scripts\build-test-package.ps1 first.' }
+if (-not (Test-Path -LiteralPath $manifest)) { throw 'The test package has not been built. Run scripts\package-msix.ps1 first.' }
 
 Remove-TestPackage
 Add-AppxPackage -Register $manifest

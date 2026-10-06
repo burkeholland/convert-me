@@ -9,23 +9,22 @@
   xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
   IgnorableNamespaces="uap uap10 rescap com desktop4 desktop5">
   <!--
-    The package manifest of Convert Me. Today it is only used for the test package that
-    scripts\build-test-package.ps1 makes and scripts\register-test-package.ps1 registers
-    for the current user. That is why the name says Development. A Store package gets
-    its name and its publisher from Partner Center.
+    The package manifest of Convert Me. scripts\package-msix.ps1 fills in the values in
+    double braces: the development identity for a test package on this PC, or the
+    identity that Partner Center assigned for the Microsoft Store.
 
     The package adds one thing to Windows: the "Convert with Convert Me" command in the
     File Explorer menu. It does not make Convert Me the app for any file type.
     packaging_test.go checks this file against the app.
   -->
   <Identity
-    Name="BurkeHolland.ConvertMe.Development"
-    Publisher="CN=Burke Holland"
-    Version="0.1.0.0"
+    Name="{{IDENTITY_NAME}}"
+    Publisher="{{PUBLISHER}}"
+    Version="{{VERSION}}"
     ProcessorArchitecture="x64" />
   <Properties>
-    <DisplayName>Convert Me Development</DisplayName>
-    <PublisherDisplayName>Burke Holland</PublisherDisplayName>
+    <DisplayName>{{PRODUCT_DISPLAY_NAME}}</DisplayName>
+    <PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>
     <Description>Converts images, audio and video on this PC. Nothing is uploaded.</Description>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -45,7 +44,7 @@
       uap10:RuntimeBehavior="packagedClassicApp"
       uap10:TrustLevel="mediumIL">
       <uap:VisualElements
-        DisplayName="Convert Me Development"
+        DisplayName="{{PRODUCT_DISPLAY_NAME}}"
         Description="Converts images, audio and video on this PC."
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"

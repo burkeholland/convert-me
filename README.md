@@ -160,19 +160,51 @@ python .\scripts\make-fixtures.py         # regenerate the test files (needs a f
 The same compiler versions give the same engine. Byte-identical results with other
 versions are not promised.
 
-### Test package with the right-click entry
+### The packaged version, with the right-click entry
 
 The packaged version of the app adds **Convert with Convert Me** to the right-click menu
-of File Explorer. Two more scripts make a test package of it and register that package
-for your user only. They need Developer Mode and the Microsoft C++ build tools.
-The file `docs\explorer-context-menu.md` in the repository says how it works, what was
-checked, and how to remove the package again.
+of File Explorer. `scripts\package-msix.ps1` makes the package from the app that
+`scripts\build.ps1` has just built. It needs the Windows SDK and the Microsoft C++ build
+tools. The file `docs\explorer-context-menu.md` in the repository says how the entry
+works, what was checked, and how to remove the test package again.
 
 ```powershell
-.\scripts\build-test-package.ps1          # put the test package together (registers nothing)
+.\scripts\package-msix.ps1                # put the test package together (registers nothing)
 .\scripts\register-test-package.ps1       # add it to Windows, for your user only
 .\scripts\register-test-package.ps1 -Remove
 ```
+
+The test package has a development identity and needs Developer Mode. It cannot go to
+the Microsoft Store.
+
+A package for the Store must carry the identity that Partner Center gave the product.
+Copy the five values exactly from Partner Center (Product management > Product identity,
+and the reserved product name) into a JSON file that you keep outside this repository:
+
+```json
+{
+  "identityName": "Publisher.ProductName",
+  "publisher": "CN=00000000-0000-0000-0000-000000000000",
+  "publisherDisplayName": "Publisher name",
+  "displayName": "The reserved product name",
+  "packageFamilyName": "Publisher.ProductName_0000000000000"
+}
+```
+
+```powershell
+.\scripts\package-msix.ps1 -StoreIdentity C:\somewhere\store-identity.json
+```
+
+The result is `dist\ConvertMe-0.1.0-windows-x64-store.msix`, with a receipt of its hashes
+next to it. Good to know:
+
+- The app version 0.1.0 is the package version 1.1.0.0. A package version cannot start
+  with 0, and the Store keeps the fourth number for itself.
+- The package is not signed. That is what the Store asks for: it signs the package it
+  publishes.
+- The package carries the source of the engine in its `source` folder.
+- The script unpacks the finished package again and compares every file. It uploads
+  nothing.
 
 ## License
 

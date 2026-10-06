@@ -14,6 +14,7 @@ to the app. In the app, **About** and then **Open licenses folder** takes you th
 | GCC runtime | 13.2.0 | GPL 3 with the GCC Runtime Library Exception 3.1 | Linked into the engine by the compiler |
 | Go standard library and runtime | See `BUILD-INFO.txt` in the app folder | BSD 3-Clause | Part of `ConvertMe.exe` |
 | Wails and other Go modules | Listed in `notices\GO-MODULES.txt` | Each under its own license, copied to `notices\go-modules` | Part of `ConvertMe.exe` |
+| Microsoft C and C++ runtime libraries | From the Microsoft C++ build tools and the Windows SDK used for the build | Microsoft's license terms for those tools, which allow passing this code on inside a program | Linked into `ConvertMeCommand.dll`, the File Explorer command. Only the packaged version of the app has that file. |
 
 Not included, but used:
 
@@ -43,6 +44,11 @@ hashes of everything that went in, and a receipt with the compiler versions and 
 hashes of the binaries that came out. That is the complete corresponding source of the
 engine. **Whoever passes the app on must pass that archive on with it**, with the same
 ease of access, and must keep `SHA256SUMS.txt` and these notices with it.
+
+The packaged version of the app (the one from the Microsoft Store) carries that archive
+inside the package, in its `source` folder. `BUILD-INFO.txt` in the package gives its
+name and its hash. To get there, choose **About** and then **Open licenses folder** in
+the app, and go one folder up.
 
 You may modify, rebuild, replace and redistribute the engine under its license.
 Nothing in the license of Convert Me restricts that, including reverse engineering for

@@ -15,7 +15,9 @@ import (
 var notInExplorerMenu = map[string]bool{".ts": true, ".mts": true}
 
 func TestPackageManifestMatchesTheApp(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join("packaging", "msix", "AppxManifest.xml"))
+	// The template of the manifest. scripts\package-msix.ps1 fills in the values in double
+	// braces and checks the finished manifest again.
+	data, err := os.ReadFile(filepath.Join("packaging", "msix", "AppxManifest.xml.in"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -54,13 +56,37 @@ func TestPackageManifestMatchesTheApp(t *testing.T) {
 	}
 
 	for _, part := range []string{
-		`Version="` + convert.Version + `.0"`,
+		`Name="{{IDENTITY_NAME}}"`,
+		`Publisher="{{PUBLISHER}}"`,
+		`Version="{{VERSION}}"`,
+		`<DisplayName>{{PRODUCT_DISPLAY_NAME}}</DisplayName>`,
+		`<PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>`,
+		`DisplayName="{{PRODUCT_DISPLAY_NAME}}"`,
+		`ProcessorArchitecture="x64"`,
 		`Executable="ConvertMe.exe"`,
 		`Path="ConvertMeCommand.dll"`,
+		`uap10:RuntimeBehavior="packagedClassicApp"`,
+		`uap10:TrustLevel="mediumIL"`,
 	} {
 		if !strings.Contains(manifest, part) {
 			t.Errorf("the manifest does not contain %s", part)
 		}
+	}
+	// The packaging script fills in exactly these values. Any other one would stay in the
+	// finished manifest as text.
+	known := map[string]bool{
+		"{{IDENTITY_NAME}}": true, "{{PUBLISHER}}": true, "{{VERSION}}": true,
+		"{{PRODUCT_DISPLAY_NAME}}": true, "{{PUBLISHER_DISPLAY_NAME}}": true,
+	}
+	for _, placeholder := range regexp.MustCompile(`\{\{[^}]*\}\}`).FindAllString(manifest, -1) {
+		if !known[placeholder] {
+			t.Errorf("the manifest has the placeholder %s, which the packaging script does not fill in", placeholder)
+		}
+	}
+	// The package asks for one capability, the one every packaged desktop app needs.
+	capabilities := regexp.MustCompile(`<(?:\w+:)?(?:Capability|DeviceCapability)\s[^>]*>`).FindAllString(manifest, -1)
+	if len(capabilities) != 1 || capabilities[0] != `<rescap:Capability Name="runFullTrust" />` {
+		t.Errorf("the manifest asks for %v, want only runFullTrust", capabilities)
 	}
 	// The package must not claim any file type, and must not ask for more than it needs.
 	for _, part := range []string{"fileTypeAssociation", "internetClient", "broadFileSystemAccess", "windows.startupTask"} {

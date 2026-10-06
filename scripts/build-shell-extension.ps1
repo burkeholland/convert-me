@@ -25,9 +25,10 @@ New-Item -ItemType Directory -Force $out | Out-Null
 
 # The compiler only works inside the environment that vcvars64.bat sets up, so every step
 # runs in one command file. Warnings are errors. The C++ runtime is linked in, so the DLL
-# needs nothing that is not part of Windows.
-$compile = '/nologo /std:c++17 /permissive- /utf-8 /W4 /WX /O1 /MT /EHsc /GS /guard:cf /sdl /DUNICODE /D_UNICODE'
-$link = '/NOLOGO /INCREMENTAL:NO /DEBUG:NONE /OPT:REF /OPT:ICF /guard:cf /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA /CETCOMPAT'
+# needs nothing that is not part of Windows. /Brepro leaves the time of the build out, so
+# the same source and the same tools always give the same file.
+$compile = '/nologo /std:c++17 /permissive- /utf-8 /W4 /WX /O1 /MT /EHsc /GS /guard:cf /sdl /Brepro /DUNICODE /D_UNICODE'
+$link = '/NOLOGO /INCREMENTAL:NO /DEBUG:NONE /OPT:REF /OPT:ICF /guard:cf /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA /CETCOMPAT /Brepro'
 @(
     '@echo off'
     # vcvars64.bat looks for vswhere.exe on PATH.

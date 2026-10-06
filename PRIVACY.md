@@ -22,10 +22,11 @@ reading only. They are never changed, moved or deleted.
 - **Short-lived work files**, in `%LOCALAPPDATA%\ConvertMe\work`: a color table while a
   video is being turned into a GIF. It is deleted when that conversion ends, and the
   folder is emptied each time the app starts.
-- **A list of the files you selected**, only in the packaged version of the app, and only
-  when you use its **Convert with Convert Me** command in File Explorer. The command
-  writes the names of the selected files to a small file in your temporary folder, so
-  that the app can read them. The app removes that file as soon as it has read it.
+- **A list of the files you selected**, only in the packaged version of the app (the one
+  from the Microsoft Store), and only when you use its **Convert with Convert Me**
+  command in File Explorer. The command writes the names of the selected files to a
+  small file in your temporary folder, so that the app can read them. The app removes
+  that file as soon as it has read it.
 
 The preview pictures in the list are kept in memory only. They are never written to disk.
 
@@ -33,7 +34,13 @@ The interface is drawn by Microsoft Edge WebView2, a part of Windows. It keeps i
 profile folder in `%APPDATA%\ConvertMe.exe`. Convert Me stores one thing there: whether
 you chose the light or the dark theme.
 
-To remove every trace of the app, delete its folder and those two folders.
+To remove every trace of the portable app, delete its folder and those two folders.
+
+**The version from the Microsoft Store** stores the same things and nothing more. On a
+PC where the portable app was never used, Windows keeps both folders inside the app's
+own storage area, under `%LOCALAPPDATA%\Packages`, and deletes them when you uninstall
+the app. On a PC where the portable app was used before, the Store version goes on
+using the two folders named above, and they stay when you uninstall it.
 
 ## What stays inside a converted file
 
@@ -60,6 +67,9 @@ One Windows component may connect on its own: if Microsoft Edge WebView2 is miss
 Microsoft installer that is part of the app downloads it once. Its installation and its
 updates are covered by Microsoft's terms and privacy statement, not by this document.
 Windows 11 and up-to-date Windows 10 already have it.
+
+If you get the app from the Microsoft Store, Windows downloads, installs and updates it.
+That is done by the Store, not by Convert Me, and Microsoft's privacy statement covers it.
 
 Building the app from source downloads source code and build tools. None of that
 involves your media files.
