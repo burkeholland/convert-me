@@ -9,3 +9,5 @@ func openFolder(string) error { return errors.New("opening folders is only suppo
 func revealFiles(string, []string) error {
 	return errors.New("showing files is only supported on Windows")
 }
+
+func letOpenWindowComeForward() {}

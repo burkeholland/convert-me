@@ -134,6 +134,16 @@ func DialogPattern() string {
 	return strings.Join(extensions, ";")
 }
 
+// InputExtensions lists every file extension the app accepts, in alphabetical order.
+func InputExtensions() []string {
+	extensions := make([]string, 0, len(inputTypes))
+	for extension := range inputTypes {
+		extensions = append(extensions, extension)
+	}
+	sort.Strings(extensions)
+	return extensions
+}
+
 // FormatTable is the honest "reads and writes" table.
 func FormatTable() []FormatRow {
 	rows := make([]FormatRow, 0, len(kindOrder))

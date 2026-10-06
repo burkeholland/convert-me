@@ -160,6 +160,20 @@ python .\scripts\make-fixtures.py         # regenerate the test files (needs a f
 The same compiler versions give the same engine. Byte-identical results with other
 versions are not promised.
 
+### Test package with the right-click entry
+
+The packaged version of the app adds **Convert with Convert Me** to the right-click menu
+of File Explorer. Two more scripts make a test package of it and register that package
+for your user only. They need Developer Mode and the Microsoft C++ build tools.
+The file `docs\explorer-context-menu.md` in the repository says how it works, what was
+checked, and how to remove the package again.
+
+```powershell
+.\scripts\build-test-package.ps1          # put the test package together (registers nothing)
+.\scripts\register-test-package.ps1       # add it to Windows, for your user only
+.\scripts\register-test-package.ps1 -Remove
+```
+
 ## License
 
 Convert Me is MIT licensed, Copyright 2026 Burke Holland. See [LICENSE](LICENSE).

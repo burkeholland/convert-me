@@ -22,6 +22,10 @@ reading only. They are never changed, moved or deleted.
 - **Short-lived work files**, in `%LOCALAPPDATA%\ConvertMe\work`: a color table while a
   video is being turned into a GIF. It is deleted when that conversion ends, and the
   folder is emptied each time the app starts.
+- **A list of the files you selected**, only in the packaged version of the app, and only
+  when you use its **Convert with Convert Me** command in File Explorer. The command
+  writes the names of the selected files to a small file in your temporary folder, so
+  that the app can read them. The app removes that file as soon as it has read it.
 
 The preview pictures in the list are kept in memory only. They are never written to disk.
 

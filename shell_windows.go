@@ -15,17 +15,28 @@ import (
 var (
 	shell32                        = windows.NewLazySystemDLL("shell32.dll")
 	ole32                          = windows.NewLazySystemDLL("ole32.dll")
+	user32                         = windows.NewLazySystemDLL("user32.dll")
 	procSHParseDisplayName         = shell32.NewProc("SHParseDisplayName")
 	procSHOpenFolderAndSelectItems = shell32.NewProc("SHOpenFolderAndSelectItems")
 	procILFree                     = shell32.NewProc("ILFree")
 	procCoInitializeEx             = ole32.NewProc("CoInitializeEx")
 	procCoUninitialize             = ole32.NewProc("CoUninitialize")
+	procAllowSetForegroundWindow   = user32.NewProc("AllowSetForegroundWindow")
 )
 
 const (
 	coinitApartmentThreaded = 0x2
 	coinitDisableOLE1DDE    = 0x4
+	asfwAny                 = 0xFFFFFFFF
 )
+
+// letOpenWindowComeForward lets a Convert Me window that is already open move in front
+// of other windows. Windows only allows that to the program the user has just started.
+// This process is that program, so it passes the permission on before it hands its
+// files to the open window.
+func letOpenWindowComeForward() {
+	procAllowSetForegroundWindow.Call(asfwAny)
+}
 
 // openFolder opens a folder in Explorer. The "explore" verb can only browse, so even a
 // path that somehow pointed at a program would never be started.

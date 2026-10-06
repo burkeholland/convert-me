@@ -1,86 +1,139 @@
-# Right-click entry in File Explorer: plan for the packaged version
+# Right-click entry in File Explorer
 
-**Status:** decided on 2 October 2026. Not built yet.
+**Status on 6 October 2026:** a test package exists and works on the development PC.
+It is not a Store package, it is not signed, and nothing was published.
 
-Convert Me will get a **Convert with Convert Me** entry in the main right-click menu of
-File Explorer on Windows 11. It will arrive with the packaged (MSIX, Microsoft Store)
-version of the app. The portable zip stays as it is: it adds nothing to File Explorer and
-it writes nothing to the registry.
+Convert Me gets a **Convert with Convert Me** entry in the main right-click menu of File
+Explorer on Windows 11. The entry belongs to the packaged version of the app. The
+portable zip stays as it is: it adds nothing to File Explorer and it writes nothing to
+the registry.
 
-This note records what was decided and why, so the work can start from here later.
+## Try the test package
 
-## What was decided
+You need Windows 11 or Windows 10 22H2 with **Developer Mode** switched on
+(Settings > System > For developers), and the Microsoft C++ build tools (Visual Studio
+2022 or its Build Tools, with "Desktop development with C++").
 
-| Question | Answer |
-| --- | --- |
-| Where does the entry go? | The main Windows 11 menu, not "Show more options" |
-| Which version gets it? | The packaged version only |
-| Does the portable zip get a registry switch? | No |
-| What is approved today? | Only this note. Packaging, registering a test package, signing and Store steps each need the owner's go-ahead |
+```powershell
+.\scripts\build.ps1                    # the app itself, as always
+.\scripts\build-test-package.ps1       # the command, the manifest, the logos: one folder
+.\scripts\register-test-package.ps1    # tell Windows about that folder, for your user only
+```
+
+Then right-click a picture, an audio file or a video in File Explorer and choose
+**Convert with Convert Me**. To take it out again:
+
+```powershell
+.\scripts\register-test-package.ps1 -Remove
+```
+
+What registering does, and what it does not do:
+
+- It adds the right-click entry and a Start menu entry called "Convert Me Development".
+- It needs no administrator rights, no certificate and no Store. It does not turn
+  Developer Mode on.
+- It copies nothing. Windows uses the folder `build\test-package\layout` in place, so
+  that folder has to stay where it is while the package is registered.
+- It does not make Convert Me the app for any file type, and it does not add Convert Me
+  to **Open with**.
+- Removing it takes away both entries and the package's own data folder. Your settings
+  for the portable app stay.
+
+## How it works
+
+Windows 11 takes entries for its main menu only from an app that has a package identity,
+and only through a small native DLL that is named in the package manifest. Paint, Photos,
+Clipchamp and Notepad do it the same way.
+
+1. **The command** is `shellext\ConvertMeCommand.cpp`, built as `ConvertMeCommand.dll`.
+   It implements `IExplorerCommand`. Windows loads it in a helper process of its own
+   (`dllhost.exe`), not inside File Explorer. It supplies the title and the icon, and it
+   receives the whole selection in one call. It never opens a selected file and knows
+   nothing about formats, so the menu is not slowed down.
+2. **The hand-off.** The command writes the selected paths to a small list file in the
+   temporary folder and starts `ConvertMe.exe` once, with `--files-from` and the name of
+   that list. One start means there is no limit on the number of files and nothing to
+   merge. The app reads the list and removes it (`launch.go`). It only reads, and only
+   removes, a file whose name and first line both say that it is such a list.
+3. **The manifest** is `packaging\msix\AppxManifest.xml`. It names the DLL as a COM
+   server (`com:SurrogateServer`) and lists the file types the command is shown for
+   (`desktop4:FileExplorerContextMenus`).
+4. **The file types** are the types the app can read (`internal\convert\formats.go`),
+   without `.ts` and `.mts`. Those two are far more often TypeScript source than video.
+   The app still accepts them when they are dropped on its window. `packaging_test.go`
+   fails when the manifest and the app disagree.
+5. **An open window is reused.** If Convert Me is already open, the files go to that
+   window. That also works when the open window is the portable app.
+
+`scripts\build-shell-extension.ps1` builds the DLL and tests it without registering
+anything: what the command says about itself, what it hands over for file names with
+spaces, signs and letters outside ASCII, and that the app reads exactly that list.
+
+## What was checked on the development PC
+
+Windows 11 Enterprise 25H2, with the test package registered:
+
+- The entry is in the main menu for a `.png` file, not under "Show more options".
+  Choosing it opens Convert Me with that file.
+- For a selection of five files of mixed types, File Explorer offers the command and
+  hands all five over in one call. The four that Convert Me reads are listed. The text
+  file among them is skipped with a message.
+- The command is not offered for a `.txt` file.
+- The app runs with the identity of the package, converts files, and leaves no list file
+  behind.
+- With the portable app already open, the files arrive in that open window.
+
+Good to know: after a pause, Windows has to start its helper process for the command
+before the command can answer. In one test that asked File Explorer for its list of
+commands from a script, the very first answer came back without the command, and the
+next one had it. If the entry is ever missing on a first right-click, right-click again.
+
+Not checked yet:
+
+- That the Convert Me window comes in front of other windows. The PC was locked while
+  the tests ran, so there was no "in front" to look at.
+- A selection of several hundred files through the menu by hand. The list is built for
+  it: the command stops at 5000 paths, and the app's own list holds 500 files.
+- Windows 10, where the same entry should show in the classic menu.
+- An ARM device. It needs an ARM64 build of the DLL.
+
+## Still to do for a Store package
+
+Each of these needs the owner's go-ahead.
+
+- The name, the publisher and the version scheme that Partner Center assigns. The test
+  manifest says "Development" on purpose.
+- A full set of logos with a `resources.pri`, so the Start menu and the taskbar show the
+  icon at every size.
+- File type associations, so Convert Me is offered under **Open with**. They were left
+  out of the test package, because Windows can ask "which app should open this?" again
+  after a new app claims a file type. With them, declare `MultiSelectModel="Player"`.
+- An ARM64 build of the DLL next to the x64 one.
+- One line in the notices for the Microsoft C++ runtime, which is linked into the DLL.
+- Signing and the Store submission itself.
+
+One known limit of the app that the package does not touch: when Convert Me is started
+many times at the same moment (thirty starts in a test), a second window can open. The
+menu command starts the app once for a whole selection, so it cannot cause that.
 
 ## Why not a registry entry
 
-A per-user registry entry is the classic way and needs no admin rights. It was considered
-and not chosen, for these reasons:
+A per-user registry entry is the classic way and needs no admin rights. It was
+considered on 2 October 2026 and not chosen:
 
-- On Windows 11 it only shows under **Show more options**. Windows keeps the main menu for
-  apps that have a package identity.
-- Windows starts the app once for every selected file, for up to 100 files, and the app has
-  to merge those starts into one list. A test with 30 files and version 0.1.0 lost no file,
-  but it opened two windows.
+- On Windows 11 it only shows under **Show more options**.
+- Windows starts the app once for every selected file, for up to 100 files, and the app
+  has to merge those starts into one list.
 - If the app folder is deleted while the entry is switched on, a dead menu entry stays
   behind.
 - It does not work from a Store package. Windows keeps the registry writes of such a
   package in a private copy that File Explorer never reads.
 
-## How the packaged version will do it
-
-Windows 11 takes main-menu entries only from an app with a package identity, through a
-small native DLL that is listed in the package manifest. Paint, Photos, Clipchamp and
-Notepad work the same way.
-
-1. **A small native DLL** that implements `IExplorerCommand`. It supplies the title and
-   the icon, hides the entry when nothing in the selection can be converted (`GetState`),
-   and receives the whole selection in one call (`Invoke`). Windows only loads this kind
-   of command from a DLL, so it cannot live in `ConvertMe.exe`. File Explorer waits for
-   the DLL while it builds the menu, so the DLL must be fast and do as little as possible.
-2. **Hand-off to the app.** The DLL writes the selected paths to a list file and starts
-   `ConvertMe.exe` once. One start means there is nothing to merge and no limit on the
-   number of files. The app needs a new argument for that list. Today it ignores every
-   argument that starts with `-`.
-3. **Manifest entries.**
-   - `com:SurrogateServer` with the class of the DLL.
-   - `desktop4:FileExplorerContextMenus` with one `desktop5:ItemType` for each file
-     extension the app can read (the list in `internal/convert/formats.go`), each with a
-     `desktop5:Verb` that points at that class. The entry then only shows on files
-     Convert Me can read.
-   - File type associations for the same extensions, so Convert Me is also offered under
-     **Open with**.
-4. **Architecture.** The DLL has to match File Explorer. An x64 DLL covers x64 PCs. ARM
-   devices need an ARM64 DLL as well.
-5. **Install and removal.** Windows adds the entry when the package is installed and
-   removes it when the package is uninstalled. No admin rights, and no registry code in
-   the app.
-
-## Before building it
-
-- Check first, with a test package, whether a manifest-only entry reaches the main menu.
-  That would be a verb on the file type association, without a DLL. Microsoft's
-  documentation only promises **Open with** and edit-style entries for it, so the expected
-  answer is no. If the answer is yes, the DLL is not needed.
-- Close the gap that the 30 file test showed: when the app is started many times at the
-  same moment, a second window can open. The file type associations in the package should
-  also declare `MultiSelectModel="Player"`, so that Windows passes all files in one start.
-- Testing needs a development package registered on the test PC. Signing and the Store
-  submission are the owner's steps.
-
-## For reference
-
 The earlier app in this repository used the registry way. Its code is on the branch
 `backup/explorer-image-converter-2026-08-21`, in `shell_windows.go` and
 `explorer_coalesce_windows.go`.
 
-Microsoft documentation this plan is based on, read on 2 October 2026:
+## Microsoft documentation this is based on
 
 - [Add a File Explorer context menu command to a packaged desktop app](https://learn.microsoft.com/windows/apps/desktop/modernize/integrate-packaged-app-with-file-explorer)
 - [Extending the Context Menu and Share Dialog in Windows 11](https://blogs.windows.com/windowsdeveloper/2021/07/19/extending-the-context-menu-and-share-dialog-in-windows-11/)

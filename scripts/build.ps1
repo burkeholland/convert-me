@@ -31,7 +31,8 @@ try {
         Invoke-Checked $npm @('run', 'build')
         Invoke-Checked $npm @('run', 'test:e2e')
     } finally { Pop-Location }
-    $unformatted = @(& (Join-Path (Split-Path $go) 'gofmt.exe') -l main.go app.go app_test.go shell_windows.go shell_other.go internal)
+    $goSources = @(Get-ChildItem -LiteralPath $root -Filter '*.go' -File | ForEach-Object Name) + 'internal'
+    $unformatted = @(& (Join-Path (Split-Path $go) 'gofmt.exe') -l @goSources)
     if ($unformatted.Count) { throw "These Go files are not formatted: $($unformatted -join ', ')" }
     Invoke-Checked $go @('test', './...')
     Invoke-Checked $go @('vet', './...')

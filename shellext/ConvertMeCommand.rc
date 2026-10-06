@@ -1,0 +1,33 @@
+// Version details of ConvertMeCommand.dll. version.h is written by
+// scripts\build-shell-extension.ps1 from the version of the app.
+#include <winver.h>
+#include "version.h"
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION VERSION_NUMBERS
+ PRODUCTVERSION VERSION_NUMBERS
+ FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+ FILEFLAGS 0
+ FILEOS VOS_NT_WINDOWS32
+ FILETYPE VFT_DLL
+ FILESUBTYPE VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "Burke Holland"
+            VALUE "FileDescription", "Convert Me command for File Explorer"
+            VALUE "FileVersion", VERSION_TEXT
+            VALUE "InternalName", "ConvertMeCommand"
+            VALUE "LegalCopyright", "Copyright 2026 Burke Holland"
+            VALUE "OriginalFilename", "ConvertMeCommand.dll"
+            VALUE "ProductName", "Convert Me"
+            VALUE "ProductVersion", VERSION_TEXT
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

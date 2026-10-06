@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+  xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+  xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+  IgnorableNamespaces="uap uap10 rescap com desktop4 desktop5">
+  <!--
+    The package manifest of Convert Me. Today it is only used for the test package that
+    scripts\build-test-package.ps1 makes and scripts\register-test-package.ps1 registers
+    for the current user. That is why the name says Development. A Store package gets
+    its name and its publisher from Partner Center.
+
+    The package adds one thing to Windows: the "Convert with Convert Me" command in the
+    File Explorer menu. It does not make Convert Me the app for any file type.
+    packaging_test.go checks this file against the app.
+  -->
+  <Identity
+    Name="BurkeHolland.ConvertMe.Development"
+    Publisher="CN=Burke Holland"
+    Version="0.1.0.0"
+    ProcessorArchitecture="x64" />
+  <Properties>
+    <DisplayName>Convert Me Development</DisplayName>
+    <PublisherDisplayName>Burke Holland</PublisherDisplayName>
+    <Description>Converts images, audio and video on this PC. Nothing is uploaded.</Description>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19045.0" MaxVersionTested="10.0.26200.0" />
+  </Dependencies>
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+  <Applications>
+    <Application
+      Id="ConvertMe"
+      Executable="ConvertMe.exe"
+      uap10:RuntimeBehavior="packagedClassicApp"
+      uap10:TrustLevel="mediumIL">
+      <uap:VisualElements
+        DisplayName="Convert Me Development"
+        Description="Converts images, audio and video on this PC."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png" />
+      <Extensions>
+        <!-- The command itself: shellext\ConvertMeCommand.cpp. The class id is in shellext\clsid.h. -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:SurrogateServer DisplayName="Convert Me command for File Explorer">
+              <com:Class Id="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" Path="ConvertMeCommand.dll" ThreadingModel="STA" />
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
+        <!--
+          The file types the command is shown for: every type the app can read
+          (internal\convert\formats.go), except .ts and .mts. Those two are far more
+          often TypeScript source than video. The app still accepts them when they
+          are dropped on its window.
+        -->
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type=".aac"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".aif"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".aiff"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".avi"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".bmp"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".flac"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".gif"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".jfif"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".jpe"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".jpeg"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".jpg"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".m2ts"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".m4a"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".m4v"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".mkv"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".mov"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".mp3"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".mp4"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".mpeg"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".mpg"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".oga"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".ogg"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".opus"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".png"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".tif"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".tiff"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".wav"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".webm"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".webp"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".wma"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".wmv"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+</Package>
