@@ -29,10 +29,11 @@ const (
 	jpegJSON    = `{"streams":[{"index":0,"codec_type":"video","codec_name":"mjpeg","width":640,"height":480,"pix_fmt":"yuvj420p"}],"format":{"format_name":"jpeg_pipe"}}`
 	audioJSON   = `{"streams":[{"index":0,"codec_type":"audio","codec_name":"mp3","sample_rate":"44100","channels":2,"sample_fmt":"fltp"}],"format":{"format_name":"mp3","duration":"10.0"}}`
 	wavJSON     = `{"streams":[{"index":0,"codec_type":"audio","codec_name":"pcm_s16le","sample_rate":"44100","channels":2,"bits_per_sample":16}],"format":{"format_name":"wav","duration":"10.0"}}`
-	videoJSON   = `{"streams":[{"index":0,"codec_type":"video","codec_name":"hevc","width":1920,"height":1080,"pix_fmt":"yuv420p","avg_frame_rate":"30/1"},{"index":1,"codec_type":"audio","codec_name":"aac","profile":"LC","sample_rate":"48000","channels":2}],"format":{"format_name":"mov,mp4,m4a,3gp,3g2,mj2","duration":"10.0"}}`
+	videoJSON   = `{"streams":[{"index":0,"codec_type":"video","codec_name":"prores","width":1920,"height":1080,"pix_fmt":"yuv422p10le","avg_frame_rate":"30/1"},{"index":1,"codec_type":"audio","codec_name":"aac","profile":"LC","sample_rate":"48000","channels":2}],"format":{"format_name":"mov,mp4,m4a,3gp,3g2,mj2","duration":"10.0"}}`
+	hevcJSON    = `{"streams":[{"index":0,"codec_type":"video","codec_name":"hevc","width":1920,"height":1080,"pix_fmt":"yuv420p","avg_frame_rate":"30/1"},{"index":1,"codec_type":"audio","codec_name":"aac","profile":"LC","sample_rate":"48000","channels":2}],"format":{"format_name":"mov,mp4,m4a,3gp,3g2,mj2","duration":"10.0"}}`
 	silentJSON  = `{"streams":[{"index":0,"codec_type":"video","codec_name":"h264","width":1280,"height":720,"pix_fmt":"yuv420p","avg_frame_rate":"30/1"}],"format":{"format_name":"mov,mp4,m4a,3gp,3g2,mj2","duration":"10.0"}}`
 	av1JSON     = `{"streams":[{"index":0,"codec_type":"video","codec_name":"av1","width":1280,"height":720,"pix_fmt":"yuv420p"}],"format":{"format_name":"mov,mp4,m4a,3gp,3g2,mj2","duration":"10.0"}}`
-	decoderList = " ------\n V....D h264  H.264\n V....D hevc  HEVC\n V....D png  PNG\n V....D mjpeg  MJPEG\n A....D aac  AAC\n A....D mp3float  MP3 (codec mp3)\n A....D pcm_s16le  PCM\n"
+	decoderList = " ------\n V....D h264  H.264\n V....D prores  ProRes\n V....D png  PNG\n V....D mjpeg  MJPEG\n A....D aac  AAC\n A....D mp3float  MP3 (codec mp3)\n A....D pcm_s16le  PCM\n"
 )
 
 func newFake() *fakeEngine {
@@ -136,6 +137,8 @@ func readyService(t *testing.T, fake *fakeEngine) *Service {
 	service.engine = Engine{FFmpeg: "ffmpeg.exe", FFprobe: "ffprobe.exe", Run: fake.run}
 	service.decoders = parseDecoders(decoderList)
 	service.caps = Capabilities{H264: true}
+	// Tests that are about HEIC photos put a fake Windows here. See heicService.
+	service.system = &fakeImages{missing: true}
 	service.state = StateReady
 	t.Cleanup(service.Close)
 	return service
@@ -289,13 +292,19 @@ func TestUnreadableAndUnsupportedFilesAreMarkedNotConverted(t *testing.T) {
 	broken := filepath.Join(folder, "broken.mp4")
 	os.WriteFile(broken, []byte("not a video"), 0600)
 	modern := writeInput(t, fake, folder, "modern.mp4", av1JSON)
+	phone := writeInput(t, fake, folder, "IMG_0042.MOV", hevcJSON)
 
-	snapshot := addAndWait(t, service, broken, modern)
+	snapshot := addAndWait(t, service, broken, modern, phone)
 	if item := itemNamed(t, snapshot, "broken.mp4"); item.Status != StatusUnsupported || item.Error != unreadableFile || item.Detail == "" {
 		t.Fatalf("broken file: %+v", item)
 	}
 	if item := itemNamed(t, snapshot, "modern.mp4"); item.Status != StatusUnsupported || !strings.Contains(item.Error, "AV1") {
 		t.Fatalf("AV1 file: %+v", item)
+	}
+	// The engine has no HEVC decoder on purpose, so a phone video in HEVC says so by name.
+	if item := itemNamed(t, snapshot, "IMG_0042.MOV"); item.Status != StatusUnsupported || item.Kind != KindVideo ||
+		item.Error != "This file uses HEVC (H.265), which Convert Me cannot read yet." {
+		t.Fatalf("HEVC video: %+v", item)
 	}
 	if _, err := service.Start(PolicyAsk); err == nil || !strings.Contains(err.Error(), "nothing to convert") {
 		t.Fatalf("start with nothing usable: %v", err)

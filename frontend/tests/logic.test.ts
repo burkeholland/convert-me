@@ -25,7 +25,7 @@ function snapshot(items: Item[], overrides: Partial<Snapshot> = {}): Snapshot {
     if (entry.kind && entry.status !== 'unsupported') counts.set(entry.kind, (counts.get(entry.kind) ?? 0) + 1);
   }
   return {
-    version: '0.1.0', engine: 'FFmpeg 8.1.3', state: 'ready', setupError: '', items,
+    version: '0.2.0', engine: 'FFmpeg 8.1.3', state: 'ready', setupError: '', items,
     kinds: (['image', 'video', 'audio'] as const).filter(kind => counts.has(kind)).map(kind => ({
       kind, label: kind, count: counts.get(kind)!, target: '', options: [],
     })),

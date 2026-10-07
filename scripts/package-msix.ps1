@@ -31,7 +31,7 @@ if ($Version -ne $configuredVersion) { throw "Package version $Version differs f
 $parts = @($Version.Split('.') | ForEach-Object { [int]$_ })
 if ($parts[0] -ge 65535 -or $parts[1] -gt 65535 -or $parts[2] -gt 65535) { throw "Version $Version cannot be turned into a package version." }
 # A package version needs a first number above zero, and the Store keeps the fourth number
-# for itself. So the app version 0.1.0 is the package version 1.1.0.0.
+# for itself. So the app version 0.2.0 is the package version 1.2.0.0.
 $packageVersion = '{0}.{1}.{2}.0' -f ($parts[0] + 1), $parts[1], $parts[2]
 if ($StoreIdentity) { $StoreIdentity = (Resolve-Path -LiteralPath $StoreIdentity).Path }
 $identity = Get-MsixIdentity $StoreIdentity

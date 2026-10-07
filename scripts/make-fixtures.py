@@ -152,12 +152,14 @@ def video() -> None:
     # Smaller than the Windows H.264 encoder accepts. Typical for small animated GIFs.
     tiny = [picture(24, 20).rotate(angle) for angle in (0, 180)]
     tiny[0].save(OUT / "animated-tiny.gif", save_all=True, append_images=tiny[1:], duration=300, loop=0)
+    # HEVC is what most phones record. The engine has no HEVC decoder, so this one must be refused.
     run(*source(), "-c:v", "libx265", "-preset", "veryfast", "-crf", "32", "-pix_fmt", "yuv420p", "-tag:v", "hvc1",
         "-x265-params", "log-level=error", *aac, str(OUT / "hevc-aac.mov"))
-    run(*source(), "-c:v", "libx265", "-preset", "veryfast", "-crf", "32", "-pix_fmt", "yuv420p10le", "-tag:v", "hvc1",
-        "-x265-params", "log-level=error:colorprim=bt2020:transfer=arib-std-b67:colormatrix=bt2020nc",
+    # HDR: 10 bit with the HLG curve, in a codec the engine reads.
+    run(*source(), "-vf", "format=yuv420p10le,setparams=color_primaries=bt2020:color_trc=arib-std-b67:colorspace=bt2020nc",
+        "-c:v", "libvpx-vp9", "-b:v", "200k", "-deadline", "realtime", "-cpu-used", "8",
         "-color_primaries", "bt2020", "-color_trc", "arib-std-b67", "-colorspace", "bt2020nc",
-        *aac, str(OUT / "hevc-hdr.mov"))
+        "-c:a", "libopus", "-b:a", "64k", str(OUT / "vp9-hdr.mkv"))
     run(*source(), "-c:v", "libvpx-vp9", "-b:v", "200k", "-deadline", "realtime", "-cpu-used", "8",
         "-c:a", "libopus", "-b:a", "64k", str(OUT / "vp9-opus.webm"))
     run(*source(), "-c:v", "libvpx", "-b:v", "200k", "-deadline", "realtime", "-cpu-used", "8",

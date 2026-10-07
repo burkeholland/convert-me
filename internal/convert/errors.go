@@ -28,6 +28,10 @@ func codecName(codec string) string {
 // explain turns a failed conversion into a sentence a person can act on. The second value
 // is the raw text for "Show details".
 func explain(err error) (message, detail string) {
+	var system *SystemImageError
+	if errors.As(err, &system) {
+		return system.Message, system.Detail
+	}
 	var failure *ProcessError
 	if !errors.As(err, &failure) {
 		return sentence(err.Error()), ""

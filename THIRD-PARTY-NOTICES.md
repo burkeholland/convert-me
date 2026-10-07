@@ -20,6 +20,11 @@ Not included, but used:
 
 - **H.264 video** is encoded by the encoder that is part of Windows (Media Foundation).
   Convert Me contains no H.264 encoder.
+- **HEIC photos** are read by codecs that belong to Windows: Microsoft's HEIF Image
+  Extensions and HEVC Video Extensions, when the PC has them. Convert Me reaches them
+  through the Windows Imaging Component. Convert Me contains no HEVC (H.265) decoder and
+  no HEVC encoder, neither in the app nor in the engine, and the engine is built without
+  the HEVC parser and stream reader as well. Microsoft's terms apply to those codecs.
 - **Microsoft Edge WebView2** draws the interface. It is part of Windows and is not in
   the app folder. The app contains Microsoft's small installer for it, which is only
   used when WebView2 is missing. Microsoft's terms apply to that installer and to
@@ -38,7 +43,7 @@ from the official, unmodified source archives, with a short list of formats:
 The build checks all of this by itself (`scripts\verify-runtime.ps1`) and stops if any
 of it is not true.
 
-Every build makes a companion archive, `ConvertMe-0.1.0-native-source.zip`. It contains
+Every build makes a companion archive, `ConvertMe-0.2.0-native-source.zip`. It contains
 the four exact source archives (FFmpeg, LAME, libwebp, zlib), the build scripts, the
 hashes of everything that went in, and a receipt with the compiler versions and the
 hashes of the binaries that came out. That is the complete corresponding source of the
@@ -64,7 +69,10 @@ standard output. It is not linked into `ConvertMe.exe`.
 Some audio and video formats are covered by patents in some countries. Convert Me is
 free software from an individual, provided as it is. If you distribute it, or use it
 commercially, it is up to you to check whether you need a license for the formats you
-use. The H.264 encoder is the one licensed with Windows.
+use. The H.264 encoder is the one licensed with Windows. HEIC photos are decoded by the
+codecs that are installed in Windows, and the engine has no HEVC (H.265) code. This
+paragraph describes what is in the app. It is not legal advice, and it does not say
+that any format is free of patents.
 
 ## Upstream projects
 

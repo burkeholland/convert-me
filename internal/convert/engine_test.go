@@ -167,8 +167,7 @@ var samples = []sample{
 	{name: "h264-silent.mp4", kind: KindVideo, width: 320, height: 240, silent: true, already: []string{"mp4"}, copied: []string{"mov", "mkv"}},
 	{name: "h264-rotated.mp4", kind: KindVideo, width: 240, height: 320, channels: 2, already: []string{"mp4"}, copied: []string{"mov", "mkv"}},
 	{name: "h264-odd-size.mkv", kind: KindVideo, width: 319, height: 239, channels: 2, copied: []string{"mp4", "mov", "mkv"}},
-	{name: "hevc-aac.mov", kind: KindVideo, width: 320, height: 240, channels: 2, copied: []string{"mp4", "mov", "mkv"}},
-	{name: "hevc-hdr.mov", kind: KindVideo, width: 320, height: 240, channels: 2, hdr: true},
+	{name: "vp9-hdr.mkv", kind: KindVideo, width: 320, height: 240, channels: 2, hdr: true},
 	{name: "vp9-opus.webm", kind: KindVideo, width: 320, height: 240, channels: 2, reencoded: []string{"mp4", "mov", "mkv"}},
 	{name: "vp8-vorbis.webm", kind: KindVideo, width: 320, height: 240, channels: 2},
 	{name: "mpeg4-mp3.avi", kind: KindVideo, width: 320, height: 240, channels: 2},
@@ -179,6 +178,10 @@ var samples = []sample{
 	{name: "animated.gif", kind: KindVideo, width: 160, height: 120, silent: true, already: []string{"gif"}},
 	{name: "animated-tiny.gif", kind: KindVideo, width: 24, height: 20, silent: true, already: []string{"gif"}},
 	{name: "av1-opus.mp4", refuse: "AV1"},
+	// The engine has no HEVC decoder, on purpose. A HEIC photo is HEVC inside, so the engine
+	// alone refuses it too. The app reads HEIC through Windows: see the HEIC tests below.
+	{name: "hevc-aac.mov", refuse: "HEVC"},
+	{name: "photo.heic", refuse: "HEVC"},
 	{name: "truncated.mp4", refuse: ""},
 }
 
@@ -230,11 +233,14 @@ func TestEngineFormatListMatchesTheBuild(t *testing.T) {
 	for _, codec := range []string{
 		"mjpeg", "png", "webp", "gif", "bmp", "tiff",
 		"mp3", "pcm_s16le", "pcm_s24le", "flac", "aac", "alac", "vorbis", "opus", "wmav2", "pcm_s16be",
-		"h264", "hevc", "vp8", "vp9", "mpeg4", "wmv2", "mpeg2video", "prores",
+		"h264", "vp8", "vp9", "mpeg4", "wmv2", "mpeg2video", "prores",
 	} {
 		if !decoders[codec] {
 			t.Errorf("the engine has no decoder for %s", codec)
 		}
+	}
+	if decoders["hevc"] {
+		t.Error("the engine has an HEVC decoder. It is left out on purpose: see scripts/configure-ffmpeg.sh")
 	}
 	if decoders["av1"] {
 		t.Error("the engine can read AV1 now: list it as supported and update the fixtures")
@@ -727,7 +733,8 @@ func TestEngineServiceConvertsABatchSafely(t *testing.T) {
 		"picture-alpha.png":      "-i %03d.png",
 		"picture-rgb.png":        long,
 		"tone-16bit.wav":         "Ünïcödé 音楽 🎵.wav",
-		"hevc-aac.mov":           "holiday;clip & more.mov",
+		"prores-pcm.mov":         "holiday;clip & more.mov",
+		"hevc-aac.mov":           "IMG_0042.MOV",
 		"av1-opus.mp4":           "modern.mp4",
 		"truncated.mp4":          "broken.mp4",
 		"animated.webp":          "sticker.webp",
@@ -753,6 +760,7 @@ func TestEngineServiceConvertsABatchSafely(t *testing.T) {
 
 	for name, want := range map[string]string{
 		"modern.mp4": "AV1", "broken.mp4": "could not read this file", "sticker.webp": "Animated WebP",
+		"IMG_0042.MOV": "HEVC (H.265)",
 	} {
 		if item := itemNamed(t, snapshot, name); item.Status != StatusUnsupported || !strings.Contains(item.Error, want) {
 			t.Errorf("%s: status %s, message %q", name, item.Status, item.Error)
@@ -763,7 +771,7 @@ func TestEngineServiceConvertsABatchSafely(t *testing.T) {
 		t.Errorf("the rotated photo is listed as %dx%d", rotated.Width, rotated.Height)
 	}
 	waitFor(t, service, "thumbnails", func(s Snapshot) bool {
-		return itemNamed(t, s, "holiday;clip & more.mov").Thumb && itemNamed(t, s, long).Thumb
+		return itemNamed(t, s, "holiday;clip & more.mov").Thumb && itemNamed(t, s, long).Thumb && itemNamed(t, s, rotated.Name).Thumb
 	})
 	thumb, err := jpeg.Decode(bytes.NewReader(service.Thumbnail(rotated.ID)))
 	if err != nil || thumb.Bounds().Dx() != 96 || thumb.Bounds().Dy() != 96 {
@@ -852,6 +860,87 @@ func TestEngineServiceConvertsABatchSafely(t *testing.T) {
 	}
 	if entries, _ := os.ReadDir(filepath.Join(dataDir, "work")); len(entries) != 0 {
 		t.Errorf("%d work folders were left behind", len(entries))
+	}
+}
+
+// TestEngineServiceConvertsHEICPhotos reads a real HEIC photo through Windows and converts
+// it with the real engine. It needs Microsoft's HEIF and HEVC extensions on this PC, and
+// says so when they are missing.
+func TestEngineServiceConvertsHEICPhotos(t *testing.T) {
+	service, dataDir := realService(t)
+	if status := service.Status(); !strings.Contains(imageReads(status), "HEIC") {
+		service.mu.Lock()
+		reason := service.caps.HEICReason
+		service.mu.Unlock()
+		t.Skipf("this PC cannot read HEIC photos, so this test is skipped: %s", reason)
+	}
+	workspace := filepath.Join(t.TempDir(), awkwardFolder)
+	inputs, destination := filepath.Join(workspace, "phone"), filepath.Join(workspace, "converted files")
+	for _, folder := range []string{inputs, destination} {
+		if err := os.MkdirAll(folder, 0700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// A phone name with awkward signs, and a HEIC photo that somebody renamed to .jpg.
+	names := []string{"-IMG_0002 & (1) 100%d 写真.HEIC", "renamed by hand.jpg"}
+	var paths []string
+	before := map[string]string{}
+	for _, name := range names {
+		path := filepath.Join(inputs, name)
+		copyFile(t, filepath.Join(fixtureFolder(t), "photo.heic"), path)
+		before[path] = fileHash(t, path)
+		paths = append(paths, path)
+	}
+	if err := service.SetDestination(DestinationFolder, destination); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := addAndWait(t, service, paths...)
+	for _, name := range names {
+		item := itemNamed(t, snapshot, name)
+		if item.Status != StatusReady || item.Source != "HEIC" || item.Kind != KindImage || item.Width != 320 || item.Height != 240 || !item.Thumb {
+			t.Fatalf("%s: %+v", name, item)
+		}
+		thumb, err := jpeg.Decode(bytes.NewReader(service.Thumbnail(item.ID)))
+		if err != nil || thumb.Bounds().Dx() != 96 || thumb.Bounds().Dy() != 96 {
+			t.Errorf("%s: the thumbnail is not a 96x96 JPEG: %v", name, err)
+		}
+	}
+	// photo.heic was made from photo.jpg, so it has to look like it in every format.
+	expected := sample{name: "photo.heic", width: 320, height: 240, look: lookColor}
+	for _, id := range offered[KindImage] {
+		target, _ := targetByID(id)
+		if err := service.SetTarget(KindImage, id); err != nil {
+			t.Fatal(err)
+		}
+		snapshot = mustStart(t, service, PolicyAsk)
+		if snapshot.Batch.Done != 2 || snapshot.Batch.Total != 2 {
+			for _, item := range snapshot.Items {
+				t.Logf("%s: %s %s %s", item.Name, item.Status, item.Error, item.Detail)
+			}
+			t.Fatalf("to %s: %+v", target.Label, snapshot.Batch)
+		}
+		for _, name := range names {
+			item := itemNamed(t, snapshot, name)
+			if item.Status != StatusDone || item.OutputName != stem(name)+target.Ext || filepath.Dir(item.OutputPath) != destination {
+				t.Errorf("%s to %s: %+v", name, target.Label, item)
+				continue
+			}
+			checkImage(t, expected, target, item.OutputPath, name+" to "+target.Label)
+		}
+	}
+	for path, hash := range before {
+		if fileHash(t, path) != hash {
+			t.Errorf("an original was changed: %s", filepath.Base(path))
+		}
+	}
+	if entries, _ := os.ReadDir(inputs); len(entries) != len(names) {
+		t.Errorf("the folder with the photos has %d entries, expected %d", len(entries), len(names))
+	}
+	if left := partials(t, destination); len(left) != 0 {
+		t.Errorf("temporary files left behind: %v", left)
+	}
+	if entries, _ := os.ReadDir(filepath.Join(dataDir, "work")); len(entries) != 0 {
+		t.Errorf("%d copies of photos were left in the work folder", len(entries))
 	}
 }
 
@@ -982,7 +1071,7 @@ func TestEngineRefusesToOverwrite(t *testing.T) {
 		}
 		untouched(target.Label + " convert")
 	}
-	for _, name := range []string{"tone-16bit.wav", "hevc-aac.mov"} {
+	for _, name := range []string{"tone-16bit.wav", "h264-ac3.mkv"} {
 		source := filepath.Join(folder, name)
 		copyFile(t, filepath.Join(fixtureFolder(t), name), source)
 		media, err := engine.Probe(ctx, source)

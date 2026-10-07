@@ -43,6 +43,7 @@ type Service struct {
 	dataDir     string
 	run         Runner
 	engine      Engine
+	system      SystemImages
 	engineLabel string
 	state       string
 	setupErr    string
@@ -71,7 +72,7 @@ type Service struct {
 func NewService(root, dataDir string, runner Runner) *Service {
 	base, stop := context.WithCancel(context.Background())
 	return &Service{
-		root: root, dataDir: dataDir, run: runner,
+		root: root, dataDir: dataDir, run: runner, system: newSystemImages(),
 		state: StateStarting, engineLabel: "FFmpeg",
 		settings: defaultSettings(), batch: BatchState{State: BatchIdle},
 		thumbs: map[string][]byte{}, decoders: map[string]bool{},
@@ -99,12 +100,14 @@ func (s *Service) Initialize(manifestData []byte) error {
 		return s.fail(fmt.Errorf("the conversion engine did not start: %w", err))
 	}
 	work := filepath.Join(s.dataDir, "work")
-	// Only this app's own work folder is cleared. It holds nothing but colour tables.
+	// Only this app's own work folder is cleared. It holds nothing but colour tables and
+	// the copies that Windows makes of HEIC photos while they are converted.
 	_ = os.RemoveAll(work)
 	if err := os.MkdirAll(work, 0700); err != nil {
 		return s.fail(fmt.Errorf("the application data folder could not be created: %w", err))
 	}
 	caps := engine.SelfTest(s.base)
+	caps.HEIC, caps.HEICReason = checkSystemImages(s.system)
 	settings := loadSettings(s.settingsPath())
 	for _, kind := range kindOrder {
 		settings.Targets[kind] = firstAvailable(kind, settings.Targets[kind], caps)
@@ -209,7 +212,7 @@ func (s *Service) Status() Snapshot {
 		Kinds:       []KindState{},
 		Destination: DestinationState{Mode: s.settings.DestinationMode, Folder: s.settings.DestinationFolder},
 		Batch:       s.batch,
-		Formats:     FormatTable(),
+		Formats:     FormatTable(s.caps),
 		Revision:    s.revision,
 		Notice:      s.notice, NoticeError: s.noticeError, NoticeSeq: s.noticeSeq,
 	}
@@ -336,6 +339,10 @@ func (s *Service) inspect(id, path string) {
 	case <-s.base.Done():
 		return
 	}
+	if systemImage(path) {
+		s.inspectSystemImage(id, path)
+		return
+	}
 	media, err := s.engine.Probe(s.base, path)
 
 	s.mu.Lock()
@@ -388,6 +395,71 @@ func (s *Service) inspect(id, path string) {
 	if media.Kind != KindAudio {
 		s.background.Add(1)
 		go s.thumbnail(id, path, media)
+	}
+}
+
+// inspectSystemImage records a HEIC photo. Windows reads it once, small. That proves the
+// photo can be read, tells its size, and gives the preview for the list.
+func (s *Service) inspectSystemImage(id, path string) {
+	s.mu.Lock()
+	system, engine := s.system, s.engine
+	can, reason := s.caps.HEIC, s.caps.HEICReason
+	s.mu.Unlock()
+	found := false
+	if !can {
+		// The codecs may have been added to Windows since Convert Me started.
+		can, reason = checkSystemImages(system)
+		found = can
+	}
+	var (
+		width, height int
+		thumb         []byte
+		err           error
+	)
+	if can {
+		preview := filepath.Join(s.dataDir, "work", "preview-"+id+".png")
+		if err = os.MkdirAll(filepath.Dir(preview), 0700); err != nil {
+			err = &SystemImageError{Message: "Convert Me could not use its work folder to read this photo.", Detail: err.Error()}
+		} else {
+			width, height, err = system.Export(path, preview, previewSide)
+		}
+		if err == nil {
+			ctx, cancel := context.WithTimeout(s.base, thumbnailTimeout)
+			thumb, _ = s.run(ctx, engine.FFmpeg, thumbnailArgs(preview, Media{Kind: KindImage}), nil)
+			cancel()
+		}
+		_ = os.Remove(preview)
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if found {
+		s.caps.HEIC, s.caps.HEICReason = true, ""
+		s.revision++
+	}
+	item := s.find(id)
+	if item == nil || item.Status != StatusChecking || s.base.Err() != nil {
+		return
+	}
+	s.revision++
+	item.Kind = KindImage
+	item.Source = heicLabel
+	switch {
+	case !can:
+		item.Status = StatusUnsupported
+		item.Error = reason
+	case err != nil:
+		failure := systemFailure(err)
+		item.Status = StatusUnsupported
+		item.Error, item.Detail = failure.Message, failure.Detail
+	default:
+		item.media = Media{Format: heicFormat, Kind: KindImage, Width: width, Height: height, system: true}
+		item.Width, item.Height = width, height
+		s.assign(item)
+		if len(thumb) > 0 {
+			s.thumbs[id] = thumb
+			item.Thumb = true
+		}
 	}
 }
 
@@ -780,6 +852,17 @@ func (s *Service) convertOne(ctx context.Context, entry queued, inputs inputSet,
 		final   string
 	)
 	err := os.MkdirAll(workDir, 0700)
+	if err == nil && media.system {
+		// Windows reads the photo and writes a copy of the picture into the work folder.
+		// The engine converts that copy, and the copy goes away with the folder.
+		source := filepath.Join(workDir, "source.png")
+		if _, _, err = s.system.Export(input, source, 0); err == nil {
+			if err = ctx.Err(); err == nil {
+				media, err = s.engine.Probe(ctx, source)
+				input = source
+			}
+		}
+	}
 	if err == nil {
 		outcome, err = s.engine.Convert(ctx, Job{
 			Media: media, Target: target, Input: input, Output: temp, WorkDir: workDir,

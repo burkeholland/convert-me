@@ -45,7 +45,7 @@ func TestEveryOfferedFormatIsDefined(t *testing.T) {
 }
 
 func TestFormatTableIsTheSameListTheAppUses(t *testing.T) {
-	rows := FormatTable()
+	rows := FormatTable(Capabilities{HEIC: true})
 	if len(rows) != 3 || rows[0].Kind != KindImage || rows[1].Kind != KindVideo || rows[2].Kind != KindAudio {
 		t.Fatalf("unexpected rows: %+v", rows)
 	}
@@ -72,15 +72,22 @@ func TestFormatTableIsTheSameListTheAppUses(t *testing.T) {
 			}
 		}
 	}
+	// HEIC depends on codecs that are part of Windows on some PCs only.
+	if got := strings.Join(rows[0].Reads, " "); got != "JPG PNG WebP GIF BMP TIFF HEIC" {
+		t.Errorf("images read %q on a PC that reads HEIC", got)
+	}
+	if got := strings.Join(FormatTable(Capabilities{})[0].Reads, " "); got != "JPG PNG WebP GIF BMP TIFF" {
+		t.Errorf("images read %q on a PC that cannot read HEIC", got)
+	}
 }
 
 func TestKnownExtensionAndDialogPattern(t *testing.T) {
-	for _, path := range []string{`C:\a\photo.JPG`, `C:\a\clip.Mov`, `C:\a\song.flac`, `C:\a\archive.tar.webp`} {
+	for _, path := range []string{`C:\a\photo.JPG`, `C:\a\clip.Mov`, `C:\a\song.flac`, `C:\a\archive.tar.webp`, `C:\a\IMG_0001.HEIC`, `C:\a\photo.heif`} {
 		if !KnownExtension(path) {
 			t.Errorf("%s should be accepted", path)
 		}
 	}
-	for _, path := range []string{`C:\a\notes.txt`, `C:\a\photo`, `C:\a\photo.jpg.exe`, `C:\a\movie.heic`} {
+	for _, path := range []string{`C:\a\notes.txt`, `C:\a\photo`, `C:\a\photo.jpg.exe`, `C:\a\photo.avif`, `C:\a\photo.heics`} {
 		if KnownExtension(path) {
 			t.Errorf("%s should not be accepted", path)
 		}

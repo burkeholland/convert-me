@@ -4,7 +4,7 @@
 # The LGPL asks that this goes wherever the app goes, so build.ps1 always makes both.
 param(
     [ValidatePattern('^\d+\.\d+\.\d+([.-][A-Za-z0-9.-]+)?$')]
-    [string]$Version = '0.1.0',
+    [string]$Version = '0.2.0',
     [string]$OutputDirectory = (Join-Path (Split-Path $PSScriptRoot -Parent) 'build\source-package-validation')
 )
 . (Join-Path $PSScriptRoot 'common.ps1')

@@ -70,6 +70,7 @@ var inputTypes = map[string]inputType{
 	".png": {KindImage, "PNG", true}, ".webp": {KindImage, "WebP", true},
 	".gif": {KindImage, "GIF", true}, ".bmp": {KindImage, "BMP", true},
 	".tiff": {KindImage, "TIFF", true}, ".tif": {KindImage, "TIFF", false},
+	".heic": {KindImage, heicLabel, true}, ".heif": {KindImage, heicLabel, false},
 
 	".mp3": {KindAudio, "MP3", true}, ".wav": {KindAudio, "WAV", true},
 	".flac": {KindAudio, "FLAC", true}, ".m4a": {KindAudio, "M4A", true},
@@ -88,7 +89,7 @@ var inputTypes = map[string]inputType{
 
 // readOrder fixes the order of the "reads" column in the format table.
 var readOrder = map[Kind][]string{
-	KindImage: {"JPG", "PNG", "WebP", "GIF", "BMP", "TIFF"},
+	KindImage: {"JPG", "PNG", "WebP", "GIF", "BMP", "TIFF", heicLabel},
 	KindAudio: {"MP3", "WAV", "FLAC", "M4A", "AAC", "OGG", "Opus", "WMA", "AIFF"},
 	KindVideo: {"MP4", "MOV", "MKV", "WebM", "AVI", "WMV", "MPG", "TS"},
 }
@@ -97,7 +98,7 @@ var readOrder = map[Kind][]string{
 // identified by content, so a PNG saved with a .jpg name is still handled as a PNG.
 var imageFormats = map[string]string{
 	"png_pipe": "PNG", "jpeg_pipe": "JPG", "bmp_pipe": "BMP",
-	"tiff_pipe": "TIFF", "webp_pipe": "WebP", "gif": "GIF",
+	"tiff_pipe": "TIFF", "webp_pipe": "WebP", "gif": "GIF", heicFormat: heicLabel,
 }
 
 func targetByID(id string) (Target, bool) {
@@ -144,11 +145,17 @@ func InputExtensions() []string {
 	return extensions
 }
 
-// FormatTable is the honest "reads and writes" table.
-func FormatTable() []FormatRow {
+// FormatTable is the honest "reads and writes" table for this computer. HEIC is in it only
+// when Windows can read HEIC photos here.
+func FormatTable(caps Capabilities) []FormatRow {
 	rows := make([]FormatRow, 0, len(kindOrder))
 	for _, kind := range kindOrder {
-		row := FormatRow{Kind: kind, Label: kindLabels[kind], Reads: append([]string{}, readOrder[kind]...)}
+		row := FormatRow{Kind: kind, Label: kindLabels[kind], Reads: []string{}}
+		for _, label := range readOrder[kind] {
+			if label != heicLabel || caps.HEIC {
+				row.Reads = append(row.Reads, label)
+			}
+		}
 		for _, id := range offered[kind] {
 			target, _ := targetByID(id)
 			if kind == KindVideo && target.Kind == KindAudio {

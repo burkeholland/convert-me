@@ -160,7 +160,7 @@ func (a *App) Status() convert.Snapshot {
 			Kinds:       []convert.KindState{},
 			Destination: convert.DestinationState{Mode: convert.DestinationSource},
 			Batch:       convert.BatchState{State: convert.BatchIdle},
-			Formats:     convert.FormatTable(),
+			Formats:     convert.FormatTable(convert.Capabilities{}),
 		}
 	}
 	return a.service.Status()

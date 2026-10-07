@@ -10,7 +10,7 @@ network cable unplugged.
 
 | Kind | Reads | Writes |
 | --- | --- | --- |
-| Images | JPG, PNG, WebP, GIF, BMP, TIFF | JPG, PNG, WebP, GIF, BMP, TIFF |
+| Images | JPG, PNG, WebP, GIF, BMP, TIFF, HEIC | JPG, PNG, WebP, GIF, BMP, TIFF |
 | Video | MP4, MOV, MKV, WebM, AVI, WMV, MPG, TS | MP4, MOV, MKV, GIF, or audio only |
 | Audio | MP3, WAV, FLAC, M4A, AAC, OGG, Opus, WMA, AIFF | MP3, M4A, WAV, FLAC |
 
@@ -19,6 +19,17 @@ converter itself uses, and every combination in it is converted for real, and ch
 each time the app is built.
 
 "Audio only" pulls the sound out of a video as MP3, M4A, WAV or FLAC.
+
+**HEIC photos** are what iPhones and many other phones save. Convert Me reads them with
+two codecs from Microsoft that belong to Windows, not to the app: the HEIF Image
+Extensions and the HEVC Video Extensions. Many PCs have both already. On a PC that does
+not, the app says so on the row of the photo, leaves HEIC out of the table on its first
+screen, and everything else works as before. Both are in the Microsoft Store, and the
+HEVC one may cost a small fee. Convert Me checks for them each time it starts.
+
+Phones store photos in a wider color space than most picture formats expect (Display P3).
+Convert Me brings the colors of a HEIC photo to standard sRGB, so the result looks the
+same in every program. Colors that sRGB cannot show are brought to the nearest one it can.
 
 ### What you get
 
@@ -37,7 +48,14 @@ Photos that are stored sideways (most phone photos) come out the right way up.
 
 ### What it cannot do yet
 
-- **AV1 video, HEIC photos and animated WebP** cannot be read. The app says so on the row.
+- **HEVC (H.265) video** cannot be read. That is what iPhones record unless the camera is
+  set to "Most Compatible", and what many newer phones and cameras record too. The engine
+  is built without an HEVC decoder on purpose. The app says so on the row.
+- **AV1 video and animated WebP** cannot be read. The app says so on the row.
+- **HEIC photos lose their details.** The date, the camera and the place stored in a HEIC
+  photo (EXIF) are not carried into the result. Only the first picture of a HEIC file is
+  converted, so a burst or a live photo gives one picture.
+- **No HEIC output.**
 - **No WebM, AV1 or OGG output.**
 - **HDR video** converts, but colors can look flat. The app warns you before you start.
 - **Copy-protected files** (DRM) cannot be converted.
@@ -66,7 +84,7 @@ See [PRIVACY.md](PRIVACY.md) for exactly what the app stores, and what it does n
 The zip comes from the build described under [Build from source](#build-from-source).
 This repository does not offer it as a download yet.
 
-1. Unzip `ConvertMe-0.1.0-windows-x64.zip` anywhere you like.
+1. Unzip `ConvertMe-0.2.0-windows-x64.zip` anywhere you like.
 2. Open `ConvertMe.exe`.
 
 There is no installer and nothing is added to Windows. To remove the app, delete the
@@ -84,6 +102,9 @@ show up in the list.
 - MP4, MOV and MKV use the H.264 encoder that comes with Windows. Windows N editions
   need the free Media Feature Pack for it. Without it those three formats are greyed out,
   with the reason, and everything else still works.
+- HEIC photos need Microsoft's HEIF Image Extensions and HEVC Video Extensions in
+  Windows. Without them HEIC photos are marked as not readable, with the reason, and
+  everything else still works.
 
 ### This build is not code signed
 
@@ -98,6 +119,12 @@ two programs, `runtime\ffmpeg\bin\ffmpeg.exe` and `ffprobe.exe`. They are built 
 unmodified source by the scripts in this repository, with only the formats above, under
 the LGPL license, and without any network code at all. H.264 video is encoded by
 Windows itself, so no H.264 encoder is included.
+
+The engine has no HEVC (H.265) code. A HEIC photo is HEVC inside, so the engine never
+opens one. The app asks Windows to read the photo instead (through the Windows Imaging
+Component), Windows writes a plain copy of the picture into the app's work folder, the
+engine converts that copy, and the copy is deleted. Convert Me itself contains no HEVC
+decoder and no HEVC encoder.
 
 The app starts the engine directly with a list of arguments. No command line is ever
 put together from file names, so a file called `-i %03d & more.png` is just a file.
@@ -135,15 +162,16 @@ That one command does all of this, and stops at the first problem:
 3. Converts every test file in `scripts\fixtures` to every format the app offers, about
    280 real conversions, and checks each result. Pictures are read back with decoders
    that have nothing to do with the engine.
-4. Runs the interface tests and the Go tests.
+4. Runs the interface tests and the Go tests. The tests that read a real HEIC photo are
+   skipped, and say so, on a PC without the two Microsoft codecs for HEIC.
 5. Builds `ConvertMe.exe` and packages it.
 
 The result:
 
 ```text
-dist\ConvertMe-0.1.0-windows-x64\          the app, ready to run
-dist\ConvertMe-0.1.0-windows-x64.zip       the same, zipped
-dist\ConvertMe-0.1.0-native-source.zip     source and build recipe of the engine
+dist\ConvertMe-0.2.0-windows-x64\          the app, ready to run
+dist\ConvertMe-0.2.0-windows-x64.zip       the same, zipped
+dist\ConvertMe-0.2.0-native-source.zip     source and build recipe of the engine
 dist\SHA256SUMS.txt
 ```
 
@@ -158,6 +186,7 @@ Useful pieces on their own:
 cd frontend; npm test; npm run test:e2e   # interface logic and interface tests
 go test ./...                             # Go tests (real conversions are skipped here)
 python .\scripts\make-fixtures.py         # regenerate the test files (needs a full FFmpeg on PATH)
+.\scripts\make-heic-fixtures.ps1          # regenerate the two HEIC pictures (needs the two Microsoft codecs)
 ```
 
 The same compiler versions give the same engine. Byte-identical results with other
@@ -198,10 +227,10 @@ and the reserved product name) into a JSON file that you keep outside this repos
 .\scripts\package-msix.ps1 -StoreIdentity C:\somewhere\store-identity.json
 ```
 
-The result is `dist\ConvertMe-0.1.0-windows-x64-store.msix`, with a receipt of its hashes
+The result is `dist\ConvertMe-0.2.0-windows-x64-store.msix`, with a receipt of its hashes
 next to it. Good to know:
 
-- The app version 0.1.0 is the package version 1.1.0.0. A package version cannot start
+- The app version 0.2.0 is the package version 1.2.0.0. A package version cannot start
   with 0, and the Store keeps the fourth number for itself.
 - The package is not signed. That is what the Store asks for: it signs the package it
   publishes.

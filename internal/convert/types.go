@@ -1,7 +1,7 @@
 package convert
 
 // Version is the application version shown in the interface and in build metadata.
-const Version = "0.1.0"
+const Version = "0.2.0"
 
 // Kind is the broad type of a media file. It decides which output formats are offered.
 type Kind string
@@ -63,6 +63,9 @@ type Media struct {
 	coverIndex int
 	// sourceExt is the lower-case extension of the file the facts came from.
 	sourceExt string
+	// system marks a picture that Windows reads for the app, such as a HEIC photo. The
+	// engine never opens such a file. It converts a copy that Windows made.
+	system bool
 }
 
 // Item is one file in the list. The exported fields are sent to the interface.
@@ -184,8 +187,11 @@ type StartResult struct {
 	Conflicts []Conflict `json:"conflicts"`
 }
 
-// Capabilities records which optional encoders work on this computer.
+// Capabilities records what depends on the codecs of this computer: writing H.264 video
+// and reading HEIC photos.
 type Capabilities struct {
 	H264       bool
 	H264Reason string
+	HEIC       bool
+	HEICReason string
 }

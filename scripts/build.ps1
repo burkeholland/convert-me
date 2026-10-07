@@ -5,7 +5,7 @@
 param(
     [switch]$RebuildNative,
     [ValidatePattern('^\d+\.\d+\.\d+([.-][A-Za-z0-9.-]+)?$')]
-    [string]$Version = '0.1.0'
+    [string]$Version = '0.2.0'
 )
 . (Join-Path $PSScriptRoot 'common.ps1')
 $root = Split-Path $PSScriptRoot -Parent

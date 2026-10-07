@@ -23,9 +23,13 @@ audio_files="mp3,wav,aac,flac,aiff"
 image_files="gif,image_png_pipe,image_jpeg_pipe,image_bmp_pipe,image_tiff_pipe,image_webp_pipe"
 # MPEG program and transport streams do not always say what they carry. The engine finds out
 # by trying these raw stream readers. Without them MPEG-2 video is mistaken for MP3 sound.
-stream_probes="mpegvideo,h264,hevc,m4v,ac3,eac3,dts,truehd,loas"
+stream_probes="mpegvideo,h264,m4v,ac3,eac3,dts,truehd,loas"
 
-video_decoders="h264,hevc,vp8,vp9,mpeg4,msmpeg4v1,msmpeg4v2,msmpeg4v3,mpeg1video,mpeg2video"
+# No HEVC (H.265) here, on purpose: no decoder, no parser, no stream reader. The engine still
+# tells the app that a file holds HEVC, because the container says so, and the app then
+# says that it cannot read it. HEIC photos are read by the app through the codecs that are
+# part of Windows (internal/convert/sysimage_windows.go), not by this engine.
+video_decoders="h264,vp8,vp9,mpeg4,msmpeg4v1,msmpeg4v2,msmpeg4v3,mpeg1video,mpeg2video"
 video_decoders="$video_decoders,wmv1,wmv2,wmv3,vc1,mjpeg,prores,dnxhd,theora,flv,h263,dvvideo,rawvideo,qtrle"
 image_decoders="png,gif,bmp,tiff,webp"
 audio_decoders="aac,aac_latm,ac3,eac3,mp3,mp3float,mp2,mp2float,flac,vorbis,opus,alac"
@@ -34,7 +38,7 @@ audio_decoders="$audio_decoders,pcm_s16le,pcm_s16be,pcm_s24le,pcm_s24be,pcm_s32l
 audio_decoders="$audio_decoders,pcm_f32le,pcm_f32be,pcm_f64le,pcm_f64be,pcm_u8,pcm_s8,pcm_alaw,pcm_mulaw,pcm_bluray,pcm_dvd"
 audio_decoders="$audio_decoders,adpcm_ima_wav,adpcm_ms,adpcm_ima_qt,amrnb,amrwb,dca,truehd,mlp"
 
-parsers="h264,hevc,vp8,vp9,vp3,mpeg4video,mpegvideo,vc1,mjpeg,h263,png,gif,bmp,webp"
+parsers="h264,vp8,vp9,vp3,mpeg4video,mpegvideo,vc1,mjpeg,h263,png,gif,bmp,webp"
 parsers="$parsers,aac,aac_latm,ac3,mpegaudio,flac,vorbis,opus,dca,mlp"
 
 # H.264 comes from the encoder that ships with Windows (Media Foundation). No H.264 encoder is built here.
@@ -42,7 +46,7 @@ parsers="$parsers,aac,aac_latm,ac3,mpegaudio,flac,vorbis,opus,dca,mlp"
 # switched on as well. It adds no decoder and no dependency: the system DLLs are loaded only on demand.
 encoders="mjpeg,png,bmp,tiff,gif,libwebp,h264_mf,aac,libmp3lame,flac,pcm_s16le,pcm_s24le"
 muxers="image2,image2pipe,webp,gif,mp4,mov,matroska,ipod,mp3,wav,flac,null"
-bitstream_filters="aac_adtstoasc,h264_mp4toannexb,hevc_mp4toannexb,vp9_superframe,vp9_superframe_split,extract_extradata"
+bitstream_filters="aac_adtstoasc,h264_mp4toannexb,vp9_superframe,vp9_superframe_split,extract_extradata"
 
 video_filters="scale,format,fps,setsar,pad,crop,transpose,hflip,vflip,rotate,trim,setpts,split,overlay,lutrgb,color"
 video_filters="$video_filters,palettegen,paletteuse,bwdif,xstack,null,testsrc2"

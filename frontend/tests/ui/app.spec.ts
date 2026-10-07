@@ -342,7 +342,7 @@ test('about names the engine and opens the licenses', async ({ page }) => {
   await desktop(page, 'ready');
   await page.getByRole('button', { name: 'About Convert Me' }).click();
   const dialog = page.getByRole('dialog', { name: /Convert Me/ });
-  await expect(dialog).toContainText('0.1.0');
+  await expect(dialog).toContainText('0.2.0');
   await expect(dialog).toContainText('FFmpeg 8.1.3');
   await expect(dialog).toContainText('No uploads, no account');
   await dialog.getByRole('button', { name: 'Open licenses folder' }).click();

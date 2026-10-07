@@ -155,14 +155,14 @@
 
   function snapshot() {
     return structuredClone({
-      version: '0.1.0', engine: 'FFmpeg 8.1.3',
+      version: '0.2.0', engine: 'FFmpeg 8.1.3',
       state: scenario === 'starting' ? 'starting' : scenario === 'setup-error' ? 'failed' : 'ready',
       setupError: scenario === 'setup-error'
         ? 'The conversion engine is missing or damaged (runtime/ffmpeg/bin/ffmpeg.exe: the file is missing). Extract the complete Convert Me download again.'
         : '',
       items, kinds: kinds(), destination, batch,
       formats: [
-        { kind: 'image', label: 'Images', reads: ['JPG', 'PNG', 'WebP', 'GIF', 'BMP', 'TIFF'], writes: ['JPG', 'PNG', 'WebP', 'GIF', 'BMP', 'TIFF'] },
+        { kind: 'image', label: 'Images', reads: ['JPG', 'PNG', 'WebP', 'GIF', 'BMP', 'TIFF', 'HEIC'], writes: ['JPG', 'PNG', 'WebP', 'GIF', 'BMP', 'TIFF'] },
         { kind: 'video', label: 'Video', reads: ['MP4', 'MOV', 'MKV', 'WebM', 'AVI', 'WMV', 'MPG', 'TS'], writes: ['MP4', 'MOV', 'MKV', 'GIF'] },
         { kind: 'audio', label: 'Audio', reads: ['MP3', 'WAV', 'FLAC', 'M4A', 'AAC', 'OGG', 'Opus', 'WMA', 'AIFF'], writes: ['MP3', 'M4A', 'WAV', 'FLAC'] },
       ],
@@ -181,7 +181,7 @@
     for (const path of paths) {
       const name = path.split(/[\\/]/).pop();
       const extension = (name.match(/\.[^.]+$/) || [''])[0].toLowerCase();
-      const kind = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tiff'].includes(extension) ? 'image'
+      const kind = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp', '.tiff', '.heic'].includes(extension) ? 'image'
         : ['.mp4', '.mov', '.mkv', '.webm', '.avi'].includes(extension) ? 'video'
         : ['.mp3', '.wav', '.flac', '.m4a', '.ogg'].includes(extension) ? 'audio' : '';
       if (!kind) {

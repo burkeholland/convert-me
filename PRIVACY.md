@@ -11,6 +11,9 @@ Only the files you put in the list. It reads each one to find out what it is, to
 the small preview picture in the list, and to convert it. Your originals are opened for
 reading only. They are never changed, moved or deleted.
 
+HEIC photos are read by Windows for the app, with the HEIC codecs from Microsoft that
+are installed on the PC. That happens on your PC, like everything else.
+
 ## What the app writes
 
 - **The converted files**, in the folder you chose: next to each original, or one folder
@@ -20,8 +23,9 @@ reading only. They are never changed, moved or deleted.
   chose for images, for audio and for video, and the folder you last chose to save to.
   That is all. No file names, no list of what you converted, no history.
 - **Short-lived work files**, in `%LOCALAPPDATA%\ConvertMe\work`: a color table while a
-  video is being turned into a GIF. It is deleted when that conversion ends, and the
-  folder is emptied each time the app starts.
+  video is being turned into a GIF, and a copy of the picture while a HEIC photo is
+  being listed or converted. Each is deleted as soon as that step ends, and the folder
+  is emptied each time the app starts.
 - **A list of the files you selected**, only in the packaged version of the app (the one
   from the Microsoft Store), and only when you use its **Convert with Convert Me**
   command in File Explorer. The command writes the names of the selected files to a
@@ -51,7 +55,8 @@ also end up inside the new file:
   can hold them.
 - A PNG made from a photo keeps the photo's EXIF details. Those can include the camera,
   the date, and the place where the photo was taken. Other picture formats made by
-  Convert Me do not carry EXIF details.
+  Convert Me do not carry EXIF details. Nothing made from a HEIC photo carries them,
+  PNG included.
 - Video keeps its title and, when the original has one, its location tag.
 - The engine writes its own name and version into audio and video files it makes.
 

@@ -73,6 +73,8 @@
             <desktop5:ItemType Type=".bmp"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
             <desktop5:ItemType Type=".flac"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
             <desktop5:ItemType Type=".gif"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".heic"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
+            <desktop5:ItemType Type=".heif"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
             <desktop5:ItemType Type=".jfif"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
             <desktop5:ItemType Type=".jpe"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>
             <desktop5:ItemType Type=".jpeg"><desktop5:Verb Id="ConvertWithConvertMe" Clsid="3FF63776-9C0B-4A6A-B03D-21E2905A7B51" /></desktop5:ItemType>

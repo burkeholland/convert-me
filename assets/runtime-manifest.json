@@ -8,13 +8,13 @@
   "files": [
     {
       "path": "runtime/ffmpeg/bin/ffmpeg.exe",
-      "sha256": "62867610527e8e3901b9f9e34fc051dcf6d29ba4db8af2f3cd96ffb3fa6c9f5b",
-      "size": 14906894
+      "sha256": "7dcf811b4ab01d00a44ff2eb095f8db3f1553a57822b32616a11aac081b981ab",
+      "size": 13160462
     },
     {
       "path": "runtime/ffmpeg/bin/ffprobe.exe",
-      "sha256": "ac3bf998296cf4f1eca3751dd025eb6629e09027d998a9428fd50ed9687099ea",
-      "size": 14692366
+      "sha256": "357c5d54252e17221d98c8a19fea5aead1af386b390df87d64a77357a724976d",
+      "size": 12945934
     }
   ]
 }
