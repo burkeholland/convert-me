@@ -217,6 +217,63 @@ svg { display: block; }
 
 .dropzone .button-primary { margin-top: 20px; }
 
+/* The first-run tip. One loop: the cursor comes in, right-clicks the file, the menu
+   opens, the cursor moves to Convert with Convert Me and presses it, and it all fades. */
+.tip {
+  margin-top: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-chrome);
+}
+.tip-art { flex: none; width: 220px; height: 132px; }
+.tip-body h2 { font-family: var(--display); font-size: 15px; font-weight: 600; line-height: 1.3; }
+.tip-body p { margin-top: 4px; font-size: 13.5px; line-height: 1.55; color: var(--ink-3); }
+.tip-body strong { color: var(--ink); font-weight: 600; }
+.tip-body .button-small { margin-top: 12px; }
+
+.tip-art * { animation: 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite both; }
+.tip-cursor { animation-name: tip-cursor; }
+.tip-selected { animation-name: tip-selected; }
+.tip-ripple { animation-name: tip-ripple; transform-box: fill-box; transform-origin: center; }
+.tip-menu { animation-name: tip-menu; transform-box: fill-box; transform-origin: 0 0; }
+.tip-pick { animation-name: tip-pick; }
+
+@keyframes tip-cursor {
+  0% { transform: translate(196px, 128px); opacity: 0; }
+  8% { opacity: 1; }
+  26%, 38% { transform: translate(48px, 60px); }
+  56%, 86% { transform: translate(130px, 92px); opacity: 1; }
+  70% { transform: translate(130px, 92px) scale(0.86); }
+  74% { transform: translate(130px, 92px) scale(1); }
+  96%, 100% { transform: translate(130px, 92px); opacity: 0; }
+}
+@keyframes tip-selected {
+  0%, 28% { opacity: 0; }
+  32%, 88% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+@keyframes tip-ripple {
+  0%, 29% { opacity: 0; transform: scale(0.3); }
+  31% { opacity: 0.7; transform: scale(0.4); }
+  42%, 100% { opacity: 0; transform: scale(1.5); }
+}
+@keyframes tip-menu {
+  0%, 31% { opacity: 0; transform: scale(0.92); }
+  36%, 88% { opacity: 1; transform: scale(1); }
+  96%, 100% { opacity: 0; transform: scale(1); }
+}
+@keyframes tip-pick {
+  0%, 52% { opacity: 0; }
+  56%, 88% { opacity: 1; }
+  96%, 100% { opacity: 0; }
+}
+
+.tip:not([hidden]) + .formats { margin-top: 24px; }
+
 .formats {
   margin-top: 32px;
   width: 100%;
@@ -594,6 +651,8 @@ svg { display: block; }
   .dropzone { padding: 22px 20px; place-items: start; }
   .dropzone h1 { font-size: 24px; }
   .formats { margin-top: 24px; }
+  .tip { align-items: flex-start; gap: 14px; padding: 14px; }
+  .tip-art { width: 140px; height: auto; }
   .formats thead { display: none; }
   .formats tbody tr { display: grid; grid-template-columns: 72px minmax(0, 1fr); padding: 8px 0; }
   .formats tbody th { width: auto; grid-row: span 2; padding: 0 12px 0 0; border-top: 0 !important; }
@@ -627,6 +686,10 @@ svg { display: block; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* The tip stands still on its last useful frame: the menu open, the entry picked. */
+  .tip-art * { animation: none; }
+  .tip-ripple { opacity: 0; }
+  .tip-cursor { transform: translate(130px, 92px); }
   .track:indeterminate { animation: none; }
   .track::-webkit-progress-value, .overall::-webkit-progress-value { transition: none; }
 }

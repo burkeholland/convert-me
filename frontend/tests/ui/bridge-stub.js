@@ -341,6 +341,9 @@
     OpenOutputFolder: async () => { calls.push('open-folder'); },
     RevealItem: async id => { calls.push(`reveal:${id}`); },
     OpenLicenses: async () => { calls.push('licenses'); },
+    // Only the packaged app has the File Explorer entry. The "packaged" scenario is the
+    // empty window of that version.
+    HasExplorerEntry: async () => scenario === 'packaged',
     MinimiseWindow: async () => { calls.push('minimise'); },
     ToggleMaximiseWindow: async () => { calls.push('maximise'); },
     CloseWindow: async () => { calls.push('close'); },

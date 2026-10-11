@@ -114,6 +114,7 @@ export interface AppBridge {
   OpenOutputFolder(): Promise<void>;
   RevealItem(id: string): Promise<void>;
   OpenLicenses(): Promise<void>;
+  HasExplorerEntry?(): Promise<boolean>;
   MinimiseWindow?(): Promise<void>;
   ToggleMaximiseWindow?(): Promise<void>;
   CloseWindow?(): Promise<void>;

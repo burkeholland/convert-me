@@ -31,3 +31,34 @@ export const minIcon = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M1.
 export const maxIcon = `<svg viewBox="0 0 12 12" fill="none" aria-hidden="true"><rect x="1.6" y="1.6" width="8.8" height="8.8" rx="1" stroke="currentColor" stroke-width="1.1"/></svg>`;
 
 export const closeIcon = `<svg viewBox="0 0 12 12" aria-hidden="true"><path d="m1.9 1.9 8.2 8.2M10.1 1.9l-8.2 8.2" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"/></svg>`;
+
+// The first-run tip: a file in File Explorer is right-clicked and Convert with Convert Me
+// is chosen. The motion is CSS in style.css, keyed on the class names here.
+export const explorerTipArt = `<svg class="tip-art" viewBox="0 0 220 132" fill="none" aria-hidden="true">
+  <rect x="0.5" y="0.5" width="219" height="131" rx="11" fill="var(--bg)" stroke="var(--line)"/>
+  <path d="M0.5 12A11.5 11.5 0 0 1 12 0.5h196A11.5 11.5 0 0 1 219.5 12v8H0.5Z" fill="var(--bg-chrome)"/>
+  <path d="M0.5 20.5h219" stroke="var(--line-soft)"/>
+  <circle cx="12" cy="10.5" r="2.6" fill="var(--line)"/><circle cx="21" cy="10.5" r="2.6" fill="var(--line)"/><circle cx="30" cy="10.5" r="2.6" fill="var(--line)"/>
+  <rect class="tip-selected" x="16" y="32" width="48" height="62" rx="6" fill="var(--accent-soft)"/>
+  <g class="tip-file">
+    <path d="M29 40h14l9 9v24a2 2 0 0 1-2 2H29a2 2 0 0 1-2-2V42a2 2 0 0 1 2-2Z" fill="var(--bg)" stroke="var(--ink-3)" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M43 40v7a2 2 0 0 0 2 2h7" stroke="var(--ink-3)" stroke-width="1.5" stroke-linejoin="round"/>
+    <circle cx="35" cy="56" r="2.6" fill="var(--accent)"/>
+    <path d="m30.5 70 6.5-7.5 4.5 4.5 3-3 4.5 6Z" fill="var(--accent)" opacity="0.55"/>
+    <rect x="25" y="81" width="30" height="4" rx="2" fill="var(--ink-4)" opacity="0.6"/>
+  </g>
+  <circle class="tip-ripple" cx="48" cy="60" r="11" stroke="var(--accent)" stroke-width="2"/>
+  <g class="tip-menu"><g transform="translate(-10 2)">
+    <rect x="62" y="56" width="150" height="66" rx="8" fill="var(--bg)" stroke="var(--line)"/>
+    <rect x="62.5" y="78.5" width="149" height="21" fill="var(--accent-soft)" class="tip-pick"/>
+    <rect x="72" y="65" width="40" height="4" rx="2" fill="var(--ink-4)" opacity="0.55"/>
+    <g transform="translate(70 82) scale(0.4375)" color="var(--accent)">
+      <rect x="3.4" y="13.4" width="14.6" height="14.6" rx="3.4" stroke="currentColor" stroke-width="2.6"/><circle cx="21.2" cy="10.8" r="7.4" stroke="currentColor" stroke-width="2.6"/>
+    </g>
+    <text x="88" y="92.6" font-family="var(--text)" font-size="9.5" font-weight="600" fill="var(--ink)">Convert with Convert Me</text>
+    <rect x="72" y="108" width="52" height="4" rx="2" fill="var(--ink-4)" opacity="0.55"/>
+  </g></g>
+  <g class="tip-cursor">
+    <path d="M0 0v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6.1h5.7Z" fill="var(--ink)" stroke="var(--bg)" stroke-width="1.2" stroke-linejoin="round"/>
+  </g>
+</svg>`;

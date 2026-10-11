@@ -35,8 +35,9 @@ are installed on the PC. That happens on your PC, like everything else.
 The preview pictures in the list are kept in memory only. They are never written to disk.
 
 The interface is drawn by Microsoft Edge WebView2, a part of Windows. It keeps its own
-profile folder in `%APPDATA%\ConvertMe.exe`. Convert Me stores one thing there: whether
-you chose the light or the dark theme.
+profile folder in `%APPDATA%\ConvertMe.exe`. Convert Me stores two things there: whether
+you chose the light or the dark theme, and, in the version from the Microsoft Store,
+that it has shown the tip about its right-click entry in File Explorer.
 
 To remove every trace of the portable app, delete its folder and those two folders.
 

@@ -5,8 +5,8 @@ import {
   primaryAction, sizeChange, summarize,
 } from './format.ts';
 import {
-  alertIcon, audioIcon, checkIcon, closeIcon, fileIcon, folderIcon, imageIcon, infoIcon, logoIcon,
-  maxIcon, minIcon, moonIcon, plusIcon, removeIcon, sunIcon, videoIcon,
+  alertIcon, audioIcon, checkIcon, closeIcon, explorerTipArt, fileIcon, folderIcon, imageIcon, infoIcon,
+  logoIcon, maxIcon, minIcon, moonIcon, plusIcon, removeIcon, sunIcon, videoIcon,
 } from './icons.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -36,6 +36,14 @@ app.innerHTML = `
           <h1 id="empty-title">Drop files to convert</h1>
           <p class="lede">Images, audio and video. Everything happens on this PC, and nothing is uploaded.</p>
           <button id="choose-files" class="button-primary" type="button" disabled>${plusIcon}<span>Choose files</span></button>
+          <aside id="explorer-tip" class="tip" aria-labelledby="explorer-tip-title" hidden>
+            ${explorerTipArt}
+            <div class="tip-body">
+              <h2 id="explorer-tip-title">Or right-click in File Explorer</h2>
+              <p>Right-click pictures, audio or video and choose <strong>Convert with Convert Me</strong>. They open here, ready to convert.</p>
+              <button id="explorer-tip-close" class="button-secondary button-small" type="button">Got it</button>
+            </div>
+          </aside>
           <table class="formats" aria-label="Formats Convert Me reads and writes">
             <thead><tr><th scope="col">Kind</th><th scope="col">Reads</th><th scope="col">Writes</th></tr></thead>
             <tbody id="formats-body"></tbody>
@@ -125,6 +133,7 @@ let lastChangeAt = 0;
 let formatsSignature = '';
 let pickersSignature = '';
 let destinationSignature = '';
+let explorerTip = false;
 
 /* ---------- window chrome ---------- */
 
@@ -599,6 +608,7 @@ function render(): void {
     : snapshot.setupError);
 
   el('empty').hidden = hasItems;
+  el('explorer-tip').hidden = !explorerTip;
   el('list').hidden = !hasItems;
   el('bar').hidden = !hasItems;
   el<HTMLButtonElement>('choose-files').disabled = !ready || locked();
@@ -701,6 +711,35 @@ el('theme').addEventListener('click', () => {
   updateTheme();
 });
 
+/* ---------------- first-run tip ---------------- */
+
+// The packaged app adds Convert with Convert Me to File Explorer, which is easy to miss.
+// The empty window shows how to use it the first time the app starts, and Got it hides
+// it straight away.
+const explorerTipKey = 'convert-me-explorer-tip';
+
+function readStored(key: string): string {
+  try { return localStorage.getItem(key) || ''; } catch { return ''; }
+}
+
+async function offerExplorerTip(): Promise<void> {
+  if (readStored(explorerTipKey) === 'seen') return;
+  try {
+    if (!(await bridge?.HasExplorerEntry?.())) return;
+  } catch {
+    return;
+  }
+  explorerTip = true;
+  writeStored(explorerTipKey, 'seen');
+  render();
+}
+
+el('explorer-tip-close').addEventListener('click', () => {
+  explorerTip = false;
+  el('explorer-tip').hidden = true;
+  el<HTMLButtonElement>('choose-files').focus();
+});
+
 document.addEventListener('keydown', event => {
   if (event.key.toLowerCase() === 'o' && (event.ctrlKey || event.metaKey) && !event.altKey) {
     event.preventDefault();
@@ -744,6 +783,7 @@ if (!bridge) {
     if (!document.querySelector('dialog[open]')) addPaths(paths);
   }, false);
   void poll();
+  void offerExplorerTip();
 }
 
 window.addEventListener('beforeunload', () => {
