@@ -16,12 +16,14 @@ var (
 	shell32                        = windows.NewLazySystemDLL("shell32.dll")
 	ole32                          = windows.NewLazySystemDLL("ole32.dll")
 	user32                         = windows.NewLazySystemDLL("user32.dll")
+	kernel32                       = windows.NewLazySystemDLL("kernel32.dll")
 	procSHParseDisplayName         = shell32.NewProc("SHParseDisplayName")
 	procSHOpenFolderAndSelectItems = shell32.NewProc("SHOpenFolderAndSelectItems")
 	procILFree                     = shell32.NewProc("ILFree")
 	procCoInitializeEx             = ole32.NewProc("CoInitializeEx")
 	procCoUninitialize             = ole32.NewProc("CoUninitialize")
 	procAllowSetForegroundWindow   = user32.NewProc("AllowSetForegroundWindow")
+	procGetCurrentPackageFullName  = kernel32.NewProc("GetCurrentPackageFullName")
 )
 
 const (
@@ -36,6 +38,19 @@ const (
 // files to the open window.
 func letOpenWindowComeForward() {
 	procAllowSetForegroundWindow.Call(asfwAny)
+}
+
+// hasPackageIdentity says whether this process runs as part of an installed package (the
+// Store version or the test package). Only then does File Explorer show the
+// Convert with Convert Me entry. A process without a package gets
+// APPMODEL_ERROR_NO_PACKAGE; a packaged one is told its zero-length buffer is too small.
+func hasPackageIdentity() bool {
+	if procGetCurrentPackageFullName.Find() != nil {
+		return false
+	}
+	var length uint32
+	status, _, _ := procGetCurrentPackageFullName.Call(uintptr(unsafe.Pointer(&length)), 0)
+	return status == uintptr(windows.ERROR_INSUFFICIENT_BUFFER)
 }
 
 // openFolder opens a folder in Explorer. The "explore" verb can only browse, so even a

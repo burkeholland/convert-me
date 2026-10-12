@@ -56,6 +56,26 @@ test('the empty window says what the app does and what it reads and writes', asy
   expect(await calls(page)).toContain('choose');
 });
 
+test('the packaged app shows how to convert from File Explorer on its first start only', async ({ page }) => {
+  await desktop(page, 'packaged');
+  const tip = page.getByRole('complementary', { name: 'Or right-click in File Explorer' });
+  await expect(tip).toBeVisible();
+  await expect(tip).toContainText('Convert with Convert Me');
+  await tip.getByRole('button', { name: 'Got it' }).click();
+  await expect(tip).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Choose files' })).toBeFocused();
+
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Drop files to convert' })).toBeVisible();
+  await expect(page.locator('#explorer-tip')).toBeHidden();
+});
+
+test('the portable app has no File Explorer entry, so it shows no tip about one', async ({ page }) => {
+  await desktop(page);
+  await expect(page.getByRole('heading', { name: 'Drop files to convert' })).toBeVisible();
+  await expect(page.locator('#explorer-tip')).toBeHidden();
+});
+
 test('nothing can be chosen until the engine has been checked', async ({ page }) => {
   await desktop(page, 'starting');
   await expect(page.getByRole('button', { name: 'Choose files' })).toBeDisabled();
@@ -389,7 +409,7 @@ test('the page only ever talks to itself', async ({ page }) => {
   expect(foreign).toEqual([]);
 });
 
-for (const scenario of ['empty', 'ready', 'converting', 'done', 'problems', 'mixed']) {
+for (const scenario of ['empty', 'packaged', 'ready', 'converting', 'done', 'problems', 'mixed']) {
   test(`at the smallest window size the ${scenario} state fits without sideways scrolling`, async ({ page }) => {
     await page.setViewportSize({ width: 480, height: 520 });
     await desktop(page, scenario);
@@ -400,7 +420,8 @@ for (const scenario of ['empty', 'ready', 'converting', 'done', 'problems', 'mix
     expect(overflow.page).toBeLessThanOrEqual(0);
     expect(overflow.tall).toBeLessThanOrEqual(0);
     // Every control a person needs is inside the window, not pushed off its edge.
-    const controls = scenario === 'empty' ? ['#choose-files', '#theme', '#win-close'] : ['#primary', '#add-files', '#theme', '#win-close'];
+    const empty = scenario === 'empty' || scenario === 'packaged';
+    const controls = empty ? ['#choose-files', '#theme', '#win-close'] : ['#primary', '#add-files', '#theme', '#win-close'];
     for (const selector of controls) {
       const box = await page.locator(selector).boundingBox();
       expect(box, selector).not.toBeNull();
@@ -408,7 +429,7 @@ for (const scenario of ['empty', 'ready', 'converting', 'done', 'problems', 'mix
       expect(box!.x + box!.width, selector).toBeLessThanOrEqual(480);
       expect(box!.y + box!.height, selector).toBeLessThanOrEqual(520);
     }
-    if (scenario !== 'empty') {
+    if (!empty) {
       const names = await page.locator('#rows .row-name').evaluateAll(nodes => nodes.map(node => {
         const box = node.getBoundingClientRect();
         return box.width;
@@ -450,6 +471,7 @@ const readable: Record<string, string[]> = {
   ready: ['.row-name', '.row-meta', '#summary-title', '#summary-detail', '.field span', '.field select', '#primary-label', '.tag-source', '.tag-target', '#add-files', '#clear'],
   problems: ['.row-note[data-tone="bad"] .row-note-text', '.row-note[data-tone="ok"] .row-note-text', '.row-note[data-tone="muted"] .row-note-text', '.row-warning', '.row-toggle', '#open-folder'],
   empty: ['#empty-title', '.lede', '.formats tbody th', '.formats-reads', '.formats-writes', '.formats-extra', '#choose-files span'],
+  packaged: ['#explorer-tip-title', '.tip-body p', '.tip-body strong', '#explorer-tip-close'],
 };
 
 for (const theme of ['light', 'dark'] as const) {

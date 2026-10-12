@@ -272,6 +272,12 @@ func (a *App) OpenLicenses() error {
 	return errors.New("the licenses folder was not found next to the app")
 }
 
+// HasExplorerEntry says whether File Explorer offers Convert with Convert Me for this
+// copy of the app. Only the packaged version adds that entry; the portable zip does not.
+func (a *App) HasExplorerEntry() bool {
+	return hasPackageIdentity()
+}
+
 func (a *App) MinimiseWindow() {
 	runtime.WindowMinimise(a.ctx)
 }
