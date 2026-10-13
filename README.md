@@ -84,7 +84,7 @@ See [PRIVACY.md](PRIVACY.md) for exactly what the app stores, and what it does n
 The zip comes from the build described under [Build from source](#build-from-source).
 This repository does not offer it as a download yet.
 
-1. Unzip `ConvertMe-0.2.0-windows-x64.zip` anywhere you like.
+1. Unzip `ConvertMe-0.2.1-windows-x64.zip` anywhere you like.
 2. Open `ConvertMe.exe`.
 
 There is no installer and nothing is added to Windows. To remove the app, delete the
@@ -169,9 +169,9 @@ That one command does all of this, and stops at the first problem:
 The result:
 
 ```text
-dist\ConvertMe-0.2.0-windows-x64\          the app, ready to run
-dist\ConvertMe-0.2.0-windows-x64.zip       the same, zipped
-dist\ConvertMe-0.2.0-native-source.zip     source and build recipe of the engine
+dist\ConvertMe-0.2.1-windows-x64\          the app, ready to run
+dist\ConvertMe-0.2.1-windows-x64.zip       the same, zipped
+dist\ConvertMe-0.2.1-native-source.zip     source and build recipe of the engine
 dist\SHA256SUMS.txt
 ```
 
@@ -227,10 +227,10 @@ and the reserved product name) into a JSON file that you keep outside this repos
 .\scripts\package-msix.ps1 -StoreIdentity C:\somewhere\store-identity.json
 ```
 
-The result is `dist\ConvertMe-0.2.0-windows-x64-store.msix`, with a receipt of its hashes
+The result is `dist\ConvertMe-0.2.1-windows-x64-store.msix`, with a receipt of its hashes
 next to it. Good to know:
 
-- The app version 0.2.0 is the package version 1.2.0.0. A package version cannot start
+- The app version 0.2.1 is the package version 1.2.1.0. A package version cannot start
   with 0, and the Store keeps the fourth number for itself.
 - The package is not signed. That is what the Store asks for: it signs the package it
   publishes.
