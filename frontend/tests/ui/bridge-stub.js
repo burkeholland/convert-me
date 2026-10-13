@@ -155,7 +155,7 @@
 
   function snapshot() {
     return structuredClone({
-      version: '0.2.0', engine: 'FFmpeg 8.1.3',
+      version: '0.2.1', engine: 'FFmpeg 8.1.3',
       state: scenario === 'starting' ? 'starting' : scenario === 'setup-error' ? 'failed' : 'ready',
       setupError: scenario === 'setup-error'
         ? 'The conversion engine is missing or damaged (runtime/ffmpeg/bin/ffmpeg.exe: the file is missing). Extract the complete Convert Me download again.'
