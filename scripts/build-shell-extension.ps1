@@ -1,43 +1,65 @@
 #Requires -Version 7.2
 # Builds and tests ConvertMeCommand.dll, the File Explorer command of the packaged version,
 # and probe.exe, the small program that tests it. Needs the Microsoft C++ build tools
-# (Visual Studio 2022 or its Build Tools, with "Desktop development with C++").
-# Nothing is installed and nothing is registered. The output goes to build\shellext\x64.
+# (Visual Studio 2022 or its Build Tools, with "Desktop development with C++", and for
+# arm64 also "MSVC ARM64 build tools").
+# Nothing is installed and nothing is registered. The output goes to build\shellext\<arch>.
+#
+# -Architecture is the processor File Explorer runs on: x64 or arm64. File Explorer only
+# loads a command built for its own processor. Without it, the architecture of this PC.
 [CmdletBinding()]
-param([string]$Version)
+param(
+    [string]$Version,
+    [ValidateSet('x64', 'arm64')]
+    [string]$Architecture
+)
 . (Join-Path $PSScriptRoot 'common.ps1')
 $root = Split-Path $PSScriptRoot -Parent
 if (-not $Version) { $Version = (Get-Content (Join-Path $root 'wails.json') -Raw | ConvertFrom-Json).info.productVersion }
 if ($Version -notmatch '^(\d+)\.(\d+)\.(\d+)') { throw "The version $Version does not start with three numbers." }
 $numbers = "$($Matches[1]),$($Matches[2]),$($Matches[3]),0"
+$hostArchitecture = Get-WindowsArchitecture
+if (-not $Architecture) { $Architecture = $hostArchitecture }
 $source = Join-Path $root 'shellext'
-$out = Join-Path $root 'build\shellext\x64'
+$out = Join-Path $root "build\shellext\$Architecture"
 
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
 if (-not (Test-Path -LiteralPath $vswhere)) { throw 'The Microsoft C++ build tools were not found. Install Visual Studio Build Tools 2022 with "Desktop development with C++".' }
-$studio = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
-$environment = if ($studio) { Join-Path $studio 'VC\Auxiliary\Build\vcvars64.bat' }
-if (-not $environment -or -not (Test-Path -LiteralPath $environment)) { throw 'The Microsoft C++ compiler for x64 was not found. Add "Desktop development with C++" to Visual Studio.' }
+$components = @('Microsoft.VisualStudio.Component.VC.Tools.x86.x64')
+if ($Architecture -eq 'arm64') { $components += 'Microsoft.VisualStudio.Component.VC.Tools.ARM64' }
+$studio = & $vswhere -latest -products * -requires @components -property installationPath
+$environment = if ($studio) { Join-Path $studio 'VC\Auxiliary\Build\vcvarsall.bat' }
+if (-not $environment -or -not (Test-Path -LiteralPath $environment)) {
+    throw "The Microsoft C++ compiler for $Architecture was not found. Add `"Desktop development with C++`"$(if ($Architecture -eq 'arm64') { ' and "MSVC ARM64 build tools"' }) to Visual Studio."
+}
+# vcvarsall.bat takes "<host>_<target>", or just the host when both are the same.
+$hostTools = @{ x64 = 'amd64'; arm64 = 'arm64' }[$hostArchitecture]
+$targetTools = @{ x64 = 'amd64'; arm64 = 'arm64' }[$Architecture]
+$toolset = if ($hostTools -eq $targetTools) { $hostTools } else { "${hostTools}_$targetTools" }
+$machine = @{ x64 = '8664'; arm64 = 'AA64' }[$Architecture]
 
 if (Test-Path -LiteralPath $out) { Remove-Item -LiteralPath $out -Recurse -Force }
 New-Item -ItemType Directory -Force $out | Out-Null
 @("#define VERSION_NUMBERS $numbers", "#define VERSION_TEXT `"$Version`"") | Set-Content (Join-Path $out 'version.h') -Encoding ascii
 
-# The compiler only works inside the environment that vcvars64.bat sets up, so every step
+# The compiler only works inside the environment that vcvarsall.bat sets up, so every step
 # runs in one command file. Warnings are errors. The C++ runtime is linked in, so the DLL
 # needs nothing that is not part of Windows. /Brepro leaves the time of the build out, so
 # the same source and the same tools always give the same file.
 $compile = '/nologo /std:c++17 /permissive- /utf-8 /W4 /WX /O1 /MT /EHsc /GS /guard:cf /sdl /Brepro /DUNICODE /D_UNICODE'
-$link = '/NOLOGO /INCREMENTAL:NO /DEBUG:NONE /OPT:REF /OPT:ICF /guard:cf /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA /CETCOMPAT /Brepro'
+$link = '/NOLOGO /INCREMENTAL:NO /DEBUG:NONE /OPT:REF /OPT:ICF /guard:cf /DYNAMICBASE /NXCOMPAT /HIGHENTROPYVA /Brepro'
+# Shadow stacks (CET) exist on x64 processors only.
+if ($Architecture -eq 'x64') { $link += ' /CETCOMPAT' }
 @(
     '@echo off'
-    # vcvars64.bat looks for vswhere.exe on PATH.
+    # vcvarsall.bat looks for vswhere.exe on PATH.
     "set `"PATH=%PATH%;$(Split-Path $vswhere)`""
-    "call `"$environment`" >nul || exit /b 1"
+    "call `"$environment`" $toolset >nul || exit /b 1"
     "cd /d `"$out`" || exit /b 1"
     "rc /nologo /I `"$out`" /fo ConvertMeCommand.res `"$source\ConvertMeCommand.rc`" || exit /b 1"
     "cl $compile /I `"$source`" `"$source\ConvertMeCommand.cpp`" ConvertMeCommand.res /Fe:ConvertMeCommand.dll /link /DLL /DEF:`"$source\ConvertMeCommand.def`" $link kernel32.lib user32.lib ole32.lib shell32.lib shlwapi.lib || exit /b 1"
     "cl $compile /I `"$source`" `"$source\probe.cpp`" /Fe:probe.exe /link $link kernel32.lib ole32.lib shell32.lib || exit /b 1"
+    'dumpbin /nologo /headers ConvertMeCommand.dll > headers.txt || exit /b 1'
     'dumpbin /nologo /dependents ConvertMeCommand.dll > dependents.txt || exit /b 1'
     'dumpbin /nologo /exports ConvertMeCommand.dll > exports.txt || exit /b 1'
 ) | Set-Content (Join-Path $out 'build.cmd') -Encoding ascii
@@ -46,6 +68,11 @@ if ($LASTEXITCODE -ne 0) { throw 'The File Explorer command could not be built.'
 $dll = Join-Path $out 'ConvertMeCommand.dll'
 $probe = Join-Path $out 'probe.exe'
 
+# The DLL must be built for the processor File Explorer runs on.
+if (-not (Select-String -LiteralPath (Join-Path $out 'headers.txt') -Pattern "^\s*$machine machine \(" -Quiet)) {
+    throw "ConvertMeCommand.dll was not built for $Architecture."
+}
+
 # The DLL may only need Windows itself, and must offer exactly the two COM entry points.
 $allowed = 'KERNEL32.dll', 'USER32.dll', 'ole32.dll', 'SHELL32.dll', 'SHLWAPI.dll'
 $needed = @(Get-Content (Join-Path $out 'dependents.txt') | ForEach-Object { $_.Trim() } | Where-Object { $_ -match '^\S+\.dll$' })
@@ -53,6 +80,14 @@ $extra = @($needed | Where-Object { $_ -notin $allowed })
 if (-not $needed.Count -or $extra.Count) { throw "ConvertMeCommand.dll needs unexpected libraries: $($extra -join ', ')" }
 $exports = @(Get-Content (Join-Path $out 'exports.txt') | ForEach-Object { if ($_ -match '^\s+\d+\s+[0-9A-F]+\s+[0-9A-F]+\s+(\S+)') { $Matches[1] } } | Sort-Object)
 if (($exports -join ',') -ne 'DllCanUnloadNow,DllGetClassObject') { throw "ConvertMeCommand.dll exports unexpected names: $($exports -join ', ')" }
+
+# The tests below load the DLL into probe.exe, which is built for the same processor. An
+# Arm PC runs both builds (x64 under emulation); an x64 PC cannot run the arm64 one.
+if ($Architecture -eq 'arm64' -and $hostArchitecture -ne 'arm64') {
+    Write-Warning "Built the arm64 File Explorer command, but this x64 PC cannot load it, so it was not tested. Run this script on an Arm PC to test it."
+    Write-Host "Built the File Explorer command for ${Architecture}: $dll ($((Get-Item $dll).Length) bytes)"
+    return
+}
 
 # Test 1: what the command says about itself.
 $stage = Join-Path $out 'test'
@@ -115,4 +150,4 @@ try {
 }
 Remove-Item -LiteralPath $stage -Recurse -Force
 
-Write-Host "Built and tested the File Explorer command: $dll ($((Get-Item $dll).Length) bytes)"
+Write-Host "Built and tested the File Explorer command for ${Architecture}: $dll ($((Get-Item $dll).Length) bytes)"

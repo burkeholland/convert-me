@@ -13,3 +13,5 @@ func revealFiles(string, []string) error {
 func letOpenWindowComeForward() {}
 
 func hasPackageIdentity() bool { return false }
+
+func hasExplorerEntry() bool { return false }

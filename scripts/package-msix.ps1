@@ -5,12 +5,19 @@
 #
 #   scripts\package-msix.ps1                          the test package, for this PC only
 #   scripts\package-msix.ps1 -StoreIdentity <file>    the package for the Microsoft Store
+#   -Architecture x64|arm64                           the processor of the package; without
+#                                                     it, the processor of this PC
+#
+# Both architectures hold the same x64 app and engine. Only the File Explorer command is
+# built for the architecture of the package, because File Explorer only loads a command
+# built for its own processor. On an Arm PC the app runs under emulation, which needs
+# Windows 11, so the arm64 package asks for Windows 11. The Store gets both packages.
 #
 # The test package has a development identity. scripts\register-test-package.ps1 registers
-# its folder, build\msix\development\layout.
+# its folder, build\msix\development-<arch>\layout.
 # The Store package needs the identity that Partner Center gave the product. It is read
 # from a small JSON file that is not kept in this repository. README.md shows what is in
-# it. The result is dist\ConvertMe-<version>-windows-x64-store.msix with a receipt next
+# it. The result is dist\ConvertMe-<version>-windows-<arch>-store.msix with a receipt next
 # to it.
 #
 # This script registers nothing, signs nothing and uploads nothing. The Store package is
@@ -19,9 +26,14 @@
 param(
     [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$Version,
-    [string]$StoreIdentity
+    [string]$StoreIdentity,
+    [ValidateSet('x64', 'arm64')]
+    [string]$Architecture
 )
 . (Join-Path $PSScriptRoot 'common.ps1')
+if (-not $Architecture) { $Architecture = Get-WindowsArchitecture }
+# x64: Windows 10 22H2. arm64: Windows 11, the first Windows on Arm that runs x64 apps.
+$minVersion = @{ x64 = '10.0.19045.0'; arm64 = '10.0.22000.0' }[$Architecture]
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root = Split-Path $PSScriptRoot -Parent
@@ -99,7 +111,7 @@ $makeAppx = Find-SdkTool 'makeappx.exe'
 $makePri = Find-SdkTool 'makepri.exe'
 
 # A registered package uses its folder in place, so that folder must not change under it.
-$stage = Join-Path $root "build\msix\$flavor"
+$stage = Join-Path $root "build\msix\$flavor-$Architecture"
 $layout = Join-Path $stage 'layout'
 $inUse = @(Get-AppxPackage -Name $identity.IdentityName | Where-Object { $_.InstallLocation -and ($_.InstallLocation.TrimEnd('\') -ieq $layout) })
 if ($inUse.Count) {
@@ -107,8 +119,8 @@ if ($inUse.Count) {
     throw "Windows uses the folder $layout in place, because the package $($identity.IdentityName) is registered from it. Remove that package first: $how"
 }
 
-& (Join-Path $PSScriptRoot 'build-shell-extension.ps1') -Version $Version
-$command = Join-Path $root 'build\shellext\x64\ConvertMeCommand.dll'
+& (Join-Path $PSScriptRoot 'build-shell-extension.ps1') -Version $Version -Architecture $Architecture
+$command = Join-Path $root "build\shellext\$Architecture\ConvertMeCommand.dll"
 
 $priRoot = Join-Path $stage 'pri'
 $verification = Join-Path $stage 'verification'
@@ -118,7 +130,8 @@ Copy-Item -LiteralPath $exe, $command, (Join-Path $app 'PRIVACY.md'), (Join-Path
 Copy-Item -LiteralPath (Join-Path $app 'runtime'), (Join-Path $app 'licenses') -Destination $layout -Recurse
 Copy-Item -LiteralPath $sourceArchive -Destination (Join-Path $layout 'source')
 @(
-    "Convert Me $Version for Windows x64, package version $packageVersion"
+    "Convert Me $Version for Windows x64, package version $packageVersion for $Architecture"
+    "File Explorer command: built for $Architecture"
     "Go version inside ConvertMe.exe: $($goCheck.Binary). Minimum in go.mod: $($goCheck.Required)"
     "Wails: $($wails.Groups[1].Value)"
     "Engine: FFmpeg $($engine.sources.ffmpeg) with zlib $($engine.sources.zlib), libwebp $($engine.sources.libwebp) and LAME $($engine.sources.lame)"
@@ -186,7 +199,9 @@ $manifest = (Get-Content -LiteralPath (Join-Path $root 'packaging\msix\AppxManif
     Replace('{{PUBLISHER}}', [Security.SecurityElement]::Escape($identity.Publisher)).
     Replace('{{PUBLISHER_DISPLAY_NAME}}', [Security.SecurityElement]::Escape($identity.PublisherDisplayName)).
     Replace('{{PRODUCT_DISPLAY_NAME}}', [Security.SecurityElement]::Escape($identity.DisplayName)).
-    Replace('{{VERSION}}', $packageVersion)
+    Replace('{{VERSION}}', $packageVersion).
+    Replace('{{ARCHITECTURE}}', $Architecture).
+    Replace('{{MIN_VERSION}}', $minVersion)
 if ($manifest.Contains('{{')) { throw 'The manifest template has a placeholder that this script does not know.' }
 $manifestPath = Join-Path $layout 'AppxManifest.xml'
 Set-Content -LiteralPath $manifestPath -Value $manifest -Encoding utf8NoBOM -NoNewline
@@ -226,7 +241,7 @@ foreach ($logo in 'StoreLogo', 'Square44x44Logo', 'Square150x150Logo') {
 }
 
 # Pack the folder, then unpack the result and compare it with the folder, file by file.
-$packageName = "ConvertMe-$Version-windows-x64-$flavor.msix"
+$packageName = "ConvertMe-$Version-windows-$Architecture-$flavor.msix"
 $package = Join-Path $(if ($identity.Store) { $dist } else { $stage }) $packageName
 Invoke-Quiet $makeAppx @('pack', '/d', $layout, '/p', $package, '/o')
 Invoke-Quiet $makeAppx @('unpack', '/p', $package, '/d', $verification, '/o')
@@ -264,6 +279,7 @@ $actual = [ordered]@{
     'publisher' = $packageIdentity.GetAttribute('Publisher')
     'version' = $packageIdentity.GetAttribute('Version')
     'architecture' = $packageIdentity.GetAttribute('ProcessorArchitecture')
+    'minimum Windows version' = $document.SelectSingleNode('//f:TargetDeviceFamily', $ns).GetAttribute('MinVersion')
     'package display name' = $document.SelectSingleNode('/f:Package/f:Properties/f:DisplayName', $ns).InnerText
     'publisher display name' = $document.SelectSingleNode('/f:Package/f:Properties/f:PublisherDisplayName', $ns).InnerText
     'application display name' = $application.SelectSingleNode('uap:VisualElements', $ns).GetAttribute('DisplayName')
@@ -277,7 +293,8 @@ $expected = [ordered]@{
     'identity name' = $identity.IdentityName
     'publisher' = $identity.Publisher
     'version' = $packageVersion
-    'architecture' = 'x64'
+    'architecture' = $Architecture
+    'minimum Windows version' = $minVersion
     'package display name' = $identity.DisplayName
     'publisher display name' = $identity.PublisherDisplayName
     'application display name' = $identity.DisplayName
@@ -308,7 +325,7 @@ $receipt = [ordered]@{
     publisherDisplayName = $identity.PublisherDisplayName
     displayName = $identity.DisplayName
     packageFamilyName = $identity.PackageFamilyName
-    architecture = 'x64'
+    architecture = $Architecture
     minimumWindowsVersion = $document.SelectSingleNode('//f:TargetDeviceFamily', $ns).GetAttribute('MinVersion')
     capabilities = $capabilities
     signed = $false
