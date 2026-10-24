@@ -52,6 +52,19 @@ function Use-GoToolchain {
     [pscustomobject]@{ Go = $go; Wails = $wails }
 }
 
+# The processor architecture of Windows itself, as a package names it: x64 or arm64. An x64
+# PowerShell on an Arm PC runs under emulation and is told AMD64 in its own environment,
+# so this reads the value that Windows keeps for the whole system.
+function Get-WindowsArchitecture {
+    $key = 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+    $native = (Get-ItemProperty -LiteralPath $key -Name PROCESSOR_ARCHITECTURE).PROCESSOR_ARCHITECTURE
+    switch ($native) {
+        'AMD64' { 'x64' }
+        'ARM64' { 'arm64' }
+        default { throw "Convert Me is packaged for x64 and arm64 only, not for $native." }
+    }
+}
+
 function Get-PackagePublisherId {
     param([string]$Publisher)
     # Windows derives the package family suffix from the first 64 bits of SHA-256(UTF-16LE publisher).

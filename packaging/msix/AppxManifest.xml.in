@@ -11,7 +11,12 @@
   <!--
     The package manifest of Convert Me. scripts\package-msix.ps1 fills in the values in
     double braces: the development identity for a test package on this PC, or the
-    identity that Partner Center assigned for the Microsoft Store.
+    identity that Partner Center assigned for the Microsoft Store, and the architecture.
+
+    There is an x64 package and an arm64 package. Both hold the same x64 app; only the
+    File Explorer command (ConvertMeCommand.dll) is built for the architecture of the
+    package, because File Explorer only loads a command built for its own processor.
+    The arm64 package needs Windows 11, the first Windows on Arm that runs x64 apps.
 
     The package adds one thing to Windows: the "Convert with Convert Me" command in the
     File Explorer menu. It does not make Convert Me the app for any file type.
@@ -21,7 +26,7 @@
     Name="{{IDENTITY_NAME}}"
     Publisher="{{PUBLISHER}}"
     Version="{{VERSION}}"
-    ProcessorArchitecture="x64" />
+    ProcessorArchitecture="{{ARCHITECTURE}}" />
   <Properties>
     <DisplayName>{{PRODUCT_DISPLAY_NAME}}</DisplayName>
     <PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>
@@ -32,7 +37,7 @@
     <Resource Language="en-us" />
   </Resources>
   <Dependencies>
-    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19045.0" MaxVersionTested="10.0.26200.0" />
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="{{MIN_VERSION}}" MaxVersionTested="10.0.26200.0" />
   </Dependencies>
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />

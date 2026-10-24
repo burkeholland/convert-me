@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -52,6 +53,52 @@ func hasPackageIdentity() bool {
 	status, _, _ := procGetCurrentPackageFullName.Call(uintptr(unsafe.Pointer(&length)), 0)
 	return status == uintptr(windows.ERROR_INSUFFICIENT_BUFFER)
 }
+
+// hasExplorerEntry says whether File Explorer really shows Convert with Convert Me. The
+// command is a DLL built for the architecture of the package. File Explorer on an Arm PC
+// does not load the one from an x64 package, so that package has no entry there.
+func hasExplorerEntry() bool {
+	if !hasPackageIdentity() {
+		return false
+	}
+	return !(packageArchitecture() == "x64" && windowsIsArm64())
+}
+
+// packageArchitecture reads the architecture from the full name of this process's package.
+func packageArchitecture() string {
+	var length uint32
+	procGetCurrentPackageFullName.Call(uintptr(unsafe.Pointer(&length)), 0)
+	if length == 0 || length > 1024 {
+		return ""
+	}
+	buffer := make([]uint16, length)
+	status, _, _ := procGetCurrentPackageFullName.Call(uintptr(unsafe.Pointer(&length)),
+		uintptr(unsafe.Pointer(&buffer[0])))
+	if status != 0 {
+		return ""
+	}
+	return architectureFromPackageFullName(windows.UTF16ToString(buffer))
+}
+
+// architectureFromPackageFullName takes Name_Version_Architecture_ResourceId_PublisherId.
+func architectureFromPackageFullName(name string) string {
+	parts := strings.Split(name, "_")
+	if len(parts) != 5 {
+		return ""
+	}
+	return strings.ToLower(parts[2])
+}
+
+// windowsIsArm64 is true on an Arm PC, also for this x64 program running under emulation.
+func windowsIsArm64() bool {
+	var process, native uint16
+	if err := windows.IsWow64Process2(windows.CurrentProcess(), &process, &native); err != nil {
+		return false
+	}
+	return native == imageFileMachineArm64
+}
+
+const imageFileMachineArm64 = 0xAA64
 
 // openFolder opens a folder in Explorer. The "explore" verb can only browse, so even a
 // path that somehow pointed at a program would never be started.

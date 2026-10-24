@@ -274,8 +274,9 @@ func (a *App) OpenLicenses() error {
 
 // HasExplorerEntry says whether File Explorer offers Convert with Convert Me for this
 // copy of the app. Only the packaged version adds that entry; the portable zip does not.
+// The x64 package on an Arm PC adds it too, but File Explorer cannot load it there.
 func (a *App) HasExplorerEntry() bool {
-	return hasPackageIdentity()
+	return hasExplorerEntry()
 }
 
 func (a *App) MinimiseWindow() {

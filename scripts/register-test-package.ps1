@@ -7,7 +7,9 @@
 #   - The Start menu lists "Convert Me Development".
 # It needs no administrator rights, no certificate and no Store. It does need Developer
 # Mode, and it does not turn that on. Nothing is copied: Windows uses the folder
-# build\msix\development\layout in place, so that folder has to stay where it is.
+# build\msix\development-<arch>\layout in place, so that folder has to stay where it is.
+# <arch> is the processor of this PC (x64 or arm64): File Explorer only loads a command
+# built for its own processor, so an Arm PC needs the arm64 package.
 # The Store package is never registered by this script. It has its own identity, and
 # Windows installs it from the Store.
 #
@@ -17,7 +19,8 @@
 param([switch]$Remove)
 . (Join-Path $PSScriptRoot 'common.ps1')
 $root = Split-Path $PSScriptRoot -Parent
-$layout = Join-Path $root 'build\msix\development\layout'
+$architecture = Get-WindowsArchitecture
+$layout = Join-Path $root "build\msix\development-$architecture\layout"
 $name = (Get-MsixIdentity).IdentityName
 
 function Remove-TestPackage {
@@ -37,12 +40,13 @@ if ($Remove) {
     return
 }
 
-$developerMode = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction SilentlyContinue).AllowDevelopmentWithoutDevLicense
+$unlock = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction SilentlyContinue
+$developerMode = if ($unlock -and $unlock.PSObject.Properties['AllowDevelopmentWithoutDevLicense']) { $unlock.AllowDevelopmentWithoutDevLicense }
 if ($developerMode -ne 1) {
     throw 'Developer Mode is off. Windows only registers a package from a folder when it is on (Settings > System > For developers). This script does not change that setting.'
 }
 $manifest = Join-Path $layout 'AppxManifest.xml'
-if (-not (Test-Path -LiteralPath $manifest)) { throw 'The test package has not been built. Run scripts\package-msix.ps1 first.' }
+if (-not (Test-Path -LiteralPath $manifest)) { throw "The $architecture test package has not been built. Run scripts\package-msix.ps1 -Architecture $architecture first." }
 
 Remove-TestPackage
 Add-AppxPackage -Register $manifest
@@ -50,7 +54,7 @@ $package = @(Get-AppxPackage -Name $name) | Select-Object -First 1
 if (-not $package) { throw "Windows did not register the package $name." }
 
 # Ask the registered command for its title, the way File Explorer does.
-$probe = Join-Path $root 'build\shellext\x64\probe.exe'
+$probe = Join-Path $root "build\shellext\$architecture\probe.exe"
 if (Test-Path -LiteralPath $probe) {
     $described = @(& $probe describe --registered)
     if ($LASTEXITCODE -ne 0 -or $described[0] -ne 'title=0x00000000 Convert with Convert Me') {

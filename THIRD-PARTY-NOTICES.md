@@ -43,7 +43,7 @@ from the official, unmodified source archives, with a short list of formats:
 The build checks all of this by itself (`scripts\verify-runtime.ps1`) and stops if any
 of it is not true.
 
-Every build makes a companion archive, `ConvertMe-0.2.1-native-source.zip`. It contains
+Every build makes a companion archive, `ConvertMe-0.2.2-native-source.zip`. It contains
 the four exact source archives (FFmpeg, LAME, libwebp, zlib), the build scripts, the
 hashes of everything that went in, and a receipt with the compiler versions and the
 hashes of the binaries that came out. That is the complete corresponding source of the

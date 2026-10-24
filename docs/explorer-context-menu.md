@@ -12,7 +12,8 @@ the registry.
 
 You need Windows 11 or Windows 10 22H2 with **Developer Mode** switched on
 (Settings > System > For developers), the Windows SDK, and the Microsoft C++ build tools
-(Visual Studio 2022 or its Build Tools, with "Desktop development with C++").
+(Visual Studio 2022 or its Build Tools, with "Desktop development with C++", and for an
+Arm PC also "MSVC ARM64 build tools").
 
 ```powershell
 .\scripts\build.ps1                    # the app itself, as always
@@ -32,8 +33,9 @@ What registering does, and what it does not do:
 - It adds the right-click entry and a Start menu entry called "Convert Me Development".
 - It needs no administrator rights, no certificate and no Store. It does not turn
   Developer Mode on.
-- It copies nothing. Windows uses the folder `build\msix\development\layout` in place,
-  so that folder has to stay where it is while the package is registered.
+- It copies nothing. Windows uses the folder `build\msix\development-<arch>\layout` in
+  place, so that folder has to stay where it is while the package is registered. `<arch>`
+  is `x64` or `arm64`. Both scripts pick the processor of the PC they run on.
 - It does not make Convert Me the app for any file type, and it does not add Convert Me
   to **Open with**.
 - Removing it takes away both entries and the package's own data folder. Your settings
@@ -69,6 +71,13 @@ Clipchamp and Notepad do it the same way.
    fails when the manifest and the app disagree.
 5. **An open window is reused.** If Convert Me is already open, the files go to that
    window. That also works when the open window is the portable app.
+6. **One package for each processor.** File Explorer only loads a command that is built
+   for its own processor. On an Arm PC it does not load an x64 `ConvertMeCommand.dll`,
+   and the entry is simply missing, without any error. So there is an x64 package and an
+   arm64 package. Both hold the same x64 app and engine; only the DLL differs. On an Arm
+   PC the app runs under emulation, which Windows 10 on Arm cannot do, so the arm64
+   package needs Windows 11. The app only shows its "Or right-click in File Explorer"
+   tip when the entry is really there: not for the x64 package on an Arm PC.
 
 `scripts\build-shell-extension.ps1` builds the DLL and tests it without registering
 anything: what the command says about itself, what it hands over for file names with
@@ -100,12 +109,16 @@ Not checked yet:
 - A selection of several hundred files through the menu by hand. The list is built for
   it: the command stops at 5000 paths, and the app's own list holds 500 files.
 - Windows 10, where the same entry should show in the classic menu.
-- An ARM device. It needs an ARM64 build of the DLL.
+- The arm64 package on an Arm PC. On 23 October 2026 the x64 Store package, installed on
+  an Arm PC (Windows 11, build 28000), showed no entry at all. That is why the arm64
+  package exists. It has not been built and tried on an Arm PC yet.
 
 ## The Store package
 
 `scripts\package-msix.ps1 -StoreIdentity <file>` makes the package for the Microsoft
-Store. README.md says what is in that file. Compared with the test package it has the
+Store. Run it twice, with `-Architecture x64` and `-Architecture arm64`, for the two
+packages. An x64 PC can make the arm64 package, but cannot test its command; the script
+says so. README.md says what is in that file. Compared with the test package it has the
 name, the publisher and the identity that Partner Center assigned, and nothing else is
 different: the same app, the same command, the same file types.
 
@@ -123,9 +136,15 @@ Left out on purpose, or still open:
 - File type associations, so Convert Me is offered under **Open with**. They were left
   out, because Windows can ask "which app should open this?" again after a new app
   claims a file type. With them, declare `MultiSelectModel="Player"`.
-- An ARM64 build of the DLL next to the x64 one. The package is x64 only.
-- Uploading the package and sending it in for certification. That is done by hand in
-  Partner Center, by the owner of the account.
+- Uploading the packages and sending them in for certification. That is done by hand in
+  Partner Center, by the owner of the account. Upload both the x64 and the arm64 package
+  to the same submission. The Store gives each PC the one for its processor. The first
+  submission with the arm64 package needs a higher version than 0.2.1, or Arm PCs that
+  already have the x64 package keep it.
+- Whether certification accepts x64 programs (the app and the engine) in the arm64
+  package. Microsoft's rules don't cover arm64. Try the first one with the Windows App
+  Certification Kit or a private flight. If it fails, the fallback is one x64 package with
+  an ARM64X command DLL.
 
 One known limit of the app that the package does not touch: when Convert Me is started
 many times at the same moment (thirty starts in a test), a second window can open. The

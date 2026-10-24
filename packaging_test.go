@@ -62,7 +62,8 @@ func TestPackageManifestMatchesTheApp(t *testing.T) {
 		`<DisplayName>{{PRODUCT_DISPLAY_NAME}}</DisplayName>`,
 		`<PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>`,
 		`DisplayName="{{PRODUCT_DISPLAY_NAME}}"`,
-		`ProcessorArchitecture="x64"`,
+		`ProcessorArchitecture="{{ARCHITECTURE}}"`,
+		`MinVersion="{{MIN_VERSION}}"`,
 		`Executable="ConvertMe.exe"`,
 		`Path="ConvertMeCommand.dll"`,
 		`uap10:RuntimeBehavior="packagedClassicApp"`,
@@ -77,6 +78,7 @@ func TestPackageManifestMatchesTheApp(t *testing.T) {
 	known := map[string]bool{
 		"{{IDENTITY_NAME}}": true, "{{PUBLISHER}}": true, "{{VERSION}}": true,
 		"{{PRODUCT_DISPLAY_NAME}}": true, "{{PUBLISHER_DISPLAY_NAME}}": true,
+		"{{ARCHITECTURE}}": true, "{{MIN_VERSION}}": true,
 	}
 	for _, placeholder := range regexp.MustCompile(`\{\{[^}]*\}\}`).FindAllString(manifest, -1) {
 		if !known[placeholder] {
