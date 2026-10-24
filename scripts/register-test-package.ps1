@@ -40,7 +40,8 @@ if ($Remove) {
     return
 }
 
-$developerMode = (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction SilentlyContinue).AllowDevelopmentWithoutDevLicense
+$unlock = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock' -ErrorAction SilentlyContinue
+$developerMode = if ($unlock -and $unlock.PSObject.Properties['AllowDevelopmentWithoutDevLicense']) { $unlock.AllowDevelopmentWithoutDevLicense }
 if ($developerMode -ne 1) {
     throw 'Developer Mode is off. Windows only registers a package from a folder when it is on (Settings > System > For developers). This script does not change that setting.'
 }

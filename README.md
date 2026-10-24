@@ -84,7 +84,7 @@ See [PRIVACY.md](PRIVACY.md) for exactly what the app stores, and what it does n
 The zip comes from the build described under [Build from source](#build-from-source).
 This repository does not offer it as a download yet.
 
-1. Unzip `ConvertMe-0.2.1-windows-x64.zip` anywhere you like.
+1. Unzip `ConvertMe-0.2.2-windows-x64.zip` anywhere you like.
 2. Open `ConvertMe.exe`.
 
 There is no installer and nothing is added to Windows. To remove the app, delete the
@@ -169,9 +169,9 @@ That one command does all of this, and stops at the first problem:
 The result:
 
 ```text
-dist\ConvertMe-0.2.1-windows-x64\          the app, ready to run
-dist\ConvertMe-0.2.1-windows-x64.zip       the same, zipped
-dist\ConvertMe-0.2.1-native-source.zip     source and build recipe of the engine
+dist\ConvertMe-0.2.2-windows-x64\          the app, ready to run
+dist\ConvertMe-0.2.2-windows-x64.zip       the same, zipped
+dist\ConvertMe-0.2.2-native-source.zip     source and build recipe of the engine
 dist\SHA256SUMS.txt
 ```
 
@@ -229,8 +229,8 @@ and the reserved product name) into a JSON file that you keep outside this repos
 .\scripts\package-msix.ps1 -StoreIdentity C:\somewhere\store-identity.json -Architecture arm64
 ```
 
-The results are `dist\ConvertMe-0.2.1-windows-x64-store.msix` and
-`dist\ConvertMe-0.2.1-windows-arm64-store.msix`, each with a receipt of its hashes next to
+The results are `dist\ConvertMe-0.2.2-windows-x64-store.msix` and
+`dist\ConvertMe-0.2.2-windows-arm64-store.msix`, each with a receipt of its hashes next to
 it. Upload both to the same submission. Good to know:
 
 - Both packages hold the same x64 app. Only the File Explorer command is built for the
@@ -238,14 +238,14 @@ it. Upload both to the same submission. Good to know:
   without the arm64 package the right-click entry is missing there. The arm64 package
   needs Windows 11, because Windows 10 on Arm cannot run x64 apps. Without
   `-Architecture` the script makes the package for the processor of the PC it runs on.
-- Ship the arm64 package with a new version (for example 0.2.2). The Store only replaces
-  an installed package with a higher version, so Arm PCs that already have the x64 1.2.1.0
-  package switch to arm64 only through an update.
+- The arm64 package first ships in 0.2.2. The Store only replaces an installed package
+  with a higher version, so Arm PCs that already have the x64 1.2.1.0 package switch to
+  arm64 only through an update.
 - Microsoft's certification rules don't say whether an arm64 package may carry x64
   programs. Check the first arm64 package with the Windows App Certification Kit, or send
   it in as a private flight, before a public release.
 
-- The app version 0.2.1 is the package version 1.2.1.0. A package version cannot start
+- The app version 0.2.2 is the package version 1.2.2.0. A package version cannot start
   with 0, and the Store keeps the fourth number for itself.
 - The package is not signed. That is what the Store asks for: it signs the package it
   publishes.

@@ -1,7 +1,7 @@
 package convert
 
 // Version is the application version shown in the interface and in build metadata.
-const Version = "0.2.1"
+const Version = "0.2.2"
 
 // Kind is the broad type of a media file. It decides which output formats are offered.
 type Kind string
